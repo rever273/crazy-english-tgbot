@@ -67,7 +67,7 @@ bot.command("start", async (ctx) => {
     const inviteLink = ctx.t('invite_link', { link: referralLink });
     // const shareMessage = ctx.t("share_message");
 
-    // const shareText = encodeURIComponent(`\n${shareMessage}`); // Кодируем текст для URL
+    // const shareText = encodeURIComponent(`\n${shareMessage}`); // Кодируем текст для URL 
     //Для простого варианта поделиться ссылкой через .url 
     // const shareUrl = `https://t.me/share/url?url=${referralLink}&text=${shareText}`; 
 
