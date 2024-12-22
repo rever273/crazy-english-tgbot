@@ -13,7 +13,7 @@ const path = require('path');
 const config = require('./config');
 
 const { Crypto } = require('./functions.js');
-const { start } = require('repl');
+// const { start } = require('repl');
 
 // Инициализация i18n
 const i18n = new I18n({
@@ -46,12 +46,13 @@ bot.catch((err) => {
 // Приветственное сообщение
 bot.command("start", async (ctx) => {
     const text = ctx.message.text;
+    const userId = ctx.from.id; // ID пользователя
 
     //проверяем, реферальный ли это код
     await checkReferralCode(ctx, text);
 
-    const userId = ctx.from.id; // ID пользователя
-    const userLanguage = ctx.from.language_code || "en"; // Получаем язык пользователя
+    // Получаем и назначаем язык пользователя
+    const userLanguage = ctx.from.language_code || "en";
     ctx.i18n.useLocale(userLanguage);
 
     const encryptedId = Crypto.encryptUserId(userId); // Шифруем ID пользователя 
@@ -65,10 +66,10 @@ bot.command("start", async (ctx) => {
     // Перевод сообщений
     const welcomeMessage = ctx.t("welcome");
     const inviteLink = ctx.t('invite_link', { link: referralLink });
-    // const shareMessage = ctx.t("share_message");
 
-    // const shareText = encodeURIComponent(`\n${shareMessage}`); // Кодируем текст для URL 
     //Для простого варианта поделиться ссылкой через .url 
+    // const shareMessage = ctx.t("share_message");
+    // const shareText = encodeURIComponent(`\n${shareMessage}`); // Кодируем текст для URL 
     // const shareUrl = `https://t.me/share/url?url=${referralLink}&text=${shareText}`; 
 
     await ctx.replyWithPhoto(
@@ -125,9 +126,14 @@ async function checkReferralCode(ctx, text) {
         if (args.length > 1) {
             let referralCode = args[1].startsWith("invite_") ? referralCode = args[1].replace("invite_", "") : args[1]; // Извлекаем зашифрованный ID
 
-            const referral_Id = Crypto.decryptUserId(referralCode); // Расшифровываем ID
+            const user_id = ctx.from.id
+            const referral_id = Crypto.decryptUserId(referralCode); // Расшифровываем ID
 
-            console.log(`Пользователь с ID ${ctx.from.id} был приглашен пользователем с ID ${referral_Id}`);
+            if (user_id == referral_id || referral_id == '') { // пользователь совпадает
+                return;
+            }
+
+            console.log(`Пользователь с ID ${ctx.from.id} был приглашен пользователем с ID ${referral_id}`);
             //TODO Добавить логику добавления реферала в базу данных 
         }
     }
