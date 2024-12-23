@@ -12,7 +12,8 @@ const path = require('path');
 
 const config = require('./config');
 
-const { Crypto } = require('./functions.js');
+const { Crypto } = require('./functions');
+const User = require("./user");
 // const { start } = require('repl');
 
 // Инициализация i18n
@@ -46,7 +47,7 @@ bot.catch((err) => {
 // Приветственное сообщение
 bot.command("start", async (ctx) => {
     const text = ctx.message.text;
-    const userId = ctx.from.id; // ID пользователя
+    const user = new User(ctx.from);
 
     //проверяем, реферальный ли это код
     await checkReferralCode(ctx, text);
@@ -55,34 +56,37 @@ bot.command("start", async (ctx) => {
     const userLanguage = ctx.from.language_code || "en";
     ctx.i18n.useLocale(userLanguage);
 
-    const encryptedId = Crypto.encryptUserId(userId); // Шифруем ID пользователя 
+    const encryptedId = Crypto.encryptUserId(user.user_id); // Шифруем ID пользователя 
     const referralCode = `invite_${encryptedId}`;
     const referralLink = `${config.botUrl}?start=${referralCode}`;
 
-    console.log('userId1', userId, encryptedId, referralLink)
+    console.log('user.user_id1', user.user_id, encryptedId, referralLink)
 
     const imagePath = path.join(__dirname, "./src/images/banner.jpg");
 
-    // Перевод сообщений
-    const welcomeMessage = ctx.t("welcome");
-    const inviteLink = ctx.t('invite_link', { link: referralLink });
+    // Перевод сообщений 
+    // const inviteLink = ctx.t('invite_link', { link: referralLink });
 
     //Для простого варианта поделиться ссылкой через .url 
     // const shareMessage = ctx.t("share_message");
     // const shareText = encodeURIComponent(`\n${shareMessage}`); // Кодируем текст для URL 
     // const shareUrl = `https://t.me/share/url?url=${referralLink}&text=${shareText}`; 
 
+    const msg_text = `${ctx.t("welcome.hi")}\n
+${ctx.t("welcome.invite")}\n
+${ctx.t('invite_link', { link: referralLink })}`
+
     await ctx.replyWithPhoto(
         new InputFile(imagePath),
         {
-            caption: `${welcomeMessage}\n\n${inviteLink}`,
+            caption: msg_text,
             parse_mode: "HTML",
             reply_markup: new InlineKeyboard()
-                .webApp(ctx.t("btn_open"), "https://testo.crazyllama.app")
+                .webApp(ctx.t("btn.open"), "https://testo.crazyllama.app")
                 .row()
                 // .url("Поделиться", shareUrl)
-                .url(ctx.t("btn_support"), config.supportBot)
-                .switchInline(ctx.t("btn_share"), referralCode)
+                .url(ctx.t("btn.support"), config.supportBot)
+                .switchInline(ctx.t("btn.share"), referralCode)
         }
     );
 });
@@ -93,6 +97,7 @@ bot.inlineQuery(/^invite_(.+)$/, async (ctx) => {
     const userLanguage = ctx.from.language_code || "en"; // Получаем язык пользователя
     ctx.i18n.useLocale(userLanguage);
 
+    const user = new User(ctx.from);
     const thumbUrl = `${config.website}/media/lama_assets/inline_llama.jpg`;
 
     // Создаем результат для инлайн-меню
@@ -100,17 +105,18 @@ bot.inlineQuery(/^invite_(.+)$/, async (ctx) => {
         {
             type: "article",
             id: encryptedId, // Уникальный идентификатор результата
-            title: ctx.t("inline_title"),
-            description: ctx.t("inline_description"),
+            title: ctx.t("inline.title"),
+            description: ctx.t("inline.description"),
             // thumb_url: thumbUrl, // Квадратное изображение
             input_message_content: {
-                message_text: ctx.t("inline_message", {
-                    username: ctx.from.username,
+                message_text: ctx.t("inline.message", {
+                    username: user.link(),
                 }),
-                parse_mode: "HTML"
+                parse_mode: "HTML",
+                disable_web_page_preview: true,
             },
             reply_markup: new InlineKeyboard().url(
-                ctx.t("btn_study"),
+                ctx.t("btn.study"),
                 `${config.botUrl}?start=${encryptedId}`
             )
         }

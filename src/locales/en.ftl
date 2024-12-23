@@ -1,13 +1,17 @@
-welcome = 👋 <b>Welcome to the world of language learning with Crazy Llama!</b>
-welcome2 = 👥 Invite friends and learn together!
-invite_link = 🔗 Your referral link:
+welcome = 
+    .hi=👋 <b>Welcome to the exciting world of learning English with the Crazy Llamas!</b>
+    .invite=👥 Invite your friends and compete in achievements together!
+
+invite_link =🔗 Your referral link:
     <code>{$link}</code>
 
-btn_study = 🇬🇧 Start Learning
-btn_open = 🇬🇧 Open the App
-btn_share = ➦ Share
-btn_support = 💬 Support
+btn =
+    .study = 🇬🇧 Start Learning
+    .open = 🇬🇧 Open App
+    .share = ➦ Share
+    .support = 💬 Support
 
-inline_title = Click to send an invitation
-inline_description = Invite friends and enjoy learning English together!
-inline_message = 🦙 User @{$username} invited you to join the Crazy Llama English app!
+inline = 
+    .title = Click to send an invitation
+    .description = 🇬🇧 Invite friends and learn English together in a fun way!
+    .message = 🦙 User {$username} invited you to join the Crazy Llama English mini app!
