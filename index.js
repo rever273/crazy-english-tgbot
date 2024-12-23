@@ -4,6 +4,7 @@ require('dotenv').config();
 const { session, Bot, InlineKeyboard, InputFile } = require('grammy');
 const { I18n } = require("@grammyjs/i18n");
 
+
 const temp_BOT_TOKEN = process.env.TEMP_BOT_TOKEN; //BOT_TOKEN
 const bot = new Bot(temp_BOT_TOKEN); // Укажите токен бота
 
@@ -46,6 +47,7 @@ bot.catch((err) => {
 
 // Приветственное сообщение
 bot.command("start", async (ctx) => {
+
     const text = ctx.message.text;
     const user = new User(ctx.from);
 
@@ -76,6 +78,8 @@ bot.command("start", async (ctx) => {
 ${ctx.t("welcome.invite")}\n
 ${ctx.t('invite_link', { link: referralLink })}`
 
+    console.time("replyWithPhoto"); // Начало измерения времени
+
     await ctx.replyWithPhoto(
         new InputFile(imagePath),
         {
@@ -88,7 +92,9 @@ ${ctx.t('invite_link', { link: referralLink })}`
                 .url(ctx.t("btn.support"), config.supportBot)
                 .switchInline(ctx.t("btn.share"), referralCode)
         }
-    );
+    ).then(() => console.timeEnd("replyWithPhoto"));
+
+    // console.timeEnd("replyWithPhoto"); // Конец измерения времени
 });
 
 // Обработка инлайн-запроса
