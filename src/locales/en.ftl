@@ -15,3 +15,10 @@ inline =
     .title = Click to send an invitation
     .description = 🇬🇧 Invite friends and learn English together in a fun way!
     .message = 🦙 User {$username} invited you to join the Crazy Llama English mini app!
+
+support = 
+    .title = 🇬🇧 Our application is designed to help users effectively and quickly learn English.
+
+        🤷‍♂️ If you encounter any difficulties while learning, want to suggest a valuable idea to improve our app, or have found an error, don't hesitate to message our support bot.
+
+        🆘 Any question can be resolved! Write to us, and we will do our best to help you.

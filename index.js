@@ -80,7 +80,7 @@ ${ctx.t('invite_link', { link: referralLink })}`
 
     console.time("replyWithPhoto"); // Начало измерения времени
 
-    await ctx.replyWithPhoto(
+    const sentMessage = await ctx.replyWithPhoto(
         new InputFile(imagePath),
         {
             caption: msg_text,
@@ -92,9 +92,33 @@ ${ctx.t('invite_link', { link: referralLink })}`
                 .url(ctx.t("btn.support"), config.supportBot)
                 .switchInline(ctx.t("btn.share"), referralCode)
         }
-    ).then(() => console.timeEnd("replyWithPhoto"));
+    )
 
-    // console.timeEnd("replyWithPhoto"); // Конец измерения времени
+    console.timeEnd("replyWithPhoto");
+
+    //Закрепляем сообщение
+    const chat = await ctx.api.getChat(ctx.chat.id);
+    if (!chat.pinned_message) {
+        await ctx.api.pinChatMessage(ctx.chat.id, sentMessage.message_id);
+    }
+});
+
+bot.command("help", async (ctx) => {
+
+    const imagePath = path.join(__dirname, "./src/images/support_llama.jpg");
+
+    await ctx.replyWithPhoto(
+        new InputFile(imagePath),
+        {
+            caption: ctx.t("support.title"),
+            parse_mode: "HTML",
+            reply_markup: new InlineKeyboard()
+                .url(ctx.t("btn.support"), config.supportBot)
+                .row()
+                .webApp(ctx.t("btn.open"), "https://testo.crazyllama.app")
+        }
+    );
+
 });
 
 // Обработка инлайн-запроса
