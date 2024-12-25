@@ -4,9 +4,8 @@ require('dotenv').config();
 const { session, Bot, InlineKeyboard, InputFile } = require('grammy');
 const { I18n } = require("@grammyjs/i18n");
 
-
-const temp_BOT_TOKEN = process.env.TEMP_BOT_TOKEN; //BOT_TOKEN
-const bot = new Bot(temp_BOT_TOKEN); // Укажите токен бота
+const BOT_TOKEN = process.env.BOT_TOKEN;
+const bot = new Bot(BOT_TOKEN); // Укажите токен бота
 
 const path = require('path');
 // const fs = require('fs');

@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon index.js",
+    "start_dev": "dotenv -e .env.development nodemon index.js",
+    "start_prod": "dotenv -e .env.production nodemon index.js",
     "built": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -12,10 +13,11 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@grammyjs/i18n": "^1.1.2",
     "crypto": "^1.0.1",
     "dotenv": "^16.4.7",
+    "dotenv-cli": "^8.0.0",
     "grammy": "^1.33.0",
-    "@grammyjs/i18n": "^1.1.2",
     "nodemon": "^3.1.9",
     "punycode": "^2.3.1"
   }
