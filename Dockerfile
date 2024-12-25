@@ -12,4 +12,5 @@ RUN npm install -g nodemon
 
 EXPOSE 3000
 
-CMD ["npm", "start_dev"]
+ENTRYPOINT ["npm"]
+CMD ["start_dev"]
