@@ -49,10 +49,10 @@ bot.catch((err) => {
   console.error("Error in middleware:", err);
 });
 
-const registration = async (tgId) => {
+const registration = async (tgId, firstName) => {
   const userByTgId = await axios.get(`${urlBack}/${tgId}`);
   if (!userByTgId?.data?.tgId) {
-    await axios.post(urlBack, { tgId });
+    await axios.post(urlBack, { tgId, firstName });
   }
   return;
 };
@@ -62,8 +62,11 @@ bot.command("start", async (ctx) => {
   const text = ctx.message.text;
   const user = new User(ctx.from);
 
-  const username = ctx.from.username ? ctx.from.username : "@none";
-  registration(username);
+  console.log(user);
+
+  const username = user.username ? user.username : "none";
+  const firstName = user.first_name ? user.first_name : "none";
+  registration(username, firstName);
 
   //проверяем, реферальный ли это код
   await checkReferralCode(ctx, text);
@@ -104,10 +107,7 @@ ${ctx.t("invite_link", { link: referralLink })}`;
     caption: msg_text,
     parse_mode: "HTML",
     reply_markup: new InlineKeyboard()
-      .webApp(
-        ctx.t("btn.open"),
-        "https://2615-89-208-137-47.ngrok-free.app/welcome"
-      )
+      .webApp(ctx.t("btn.open"), "https://forward2.hive-dev.ru/welcome")
       .row()
       // .url("Поделиться", shareUrl)
       .url(ctx.t("btn.support"), config.supportBot)
