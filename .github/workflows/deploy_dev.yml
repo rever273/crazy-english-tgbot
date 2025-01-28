@@ -1,0 +1,24 @@
+name: Deploy DEV
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  PROD:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: crazyllama.app
+          username: developer
+          port: 22
+          password: dev3H19J21
+          script: |
+            cd /opt/crazy-english-general-dev/crazy-english-tgbot
+            git switch dev
+            git pull
+            cd ../
+            docker-compose up -d --build test-bot
