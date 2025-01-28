@@ -49,10 +49,18 @@ bot.catch((err) => {
   console.error("Error in middleware:", err);
 });
 
-const registration = async (tgId, firstName) => {
-  const userByTgId = await axios.get(`${urlBack}/${tgId}`);
+const registration = async (ctx) => {
+  const data = {
+    tgId: ctx.from.username,
+    userName: ctx.from.username,
+    firstName: ctx.from.first_name,
+    languageCode: ctx?.from?.language_code ? ctx.from.language_code : "en",
+    isPremium: ctx?.from?.is_premium ? ctx.from.is_premium : false,
+  };
+  console.log(ctx.from);
+  const userByTgId = await axios.get(`${urlBack}/${data.tgId}`);
   if (!userByTgId?.data?.tgId) {
-    await axios.post(urlBack, { tgId, firstName });
+    await axios.post(urlBack, data);
   }
   return;
 };
@@ -62,11 +70,7 @@ bot.command("start", async (ctx) => {
   const text = ctx.message.text;
   const user = new User(ctx.from);
 
-  console.log(user);
-
-  const username = user.username ? user.username : "none";
-  const firstName = user.first_name ? user.first_name : "none";
-  registration(username, firstName);
+  registration(ctx);
 
   //проверяем, реферальный ли это код
   await checkReferralCode(ctx, text);
