@@ -1,19 +1,18 @@
-process.env.NODE_NO_WARNINGS = "1";
-require("dotenv").config();
+require("dotenv").config({ path: ".env.development" });
 
 const { session, Bot, InlineKeyboard, InputFile } = require("grammy");
+const path = require("path");
 const { I18n } = require("@grammyjs/i18n");
 const axios = require("axios");
+const config = require("./config");
 
+process.env.NODE_NO_WARNINGS = "1";
 const BOT_TOKEN = process.env.BOT_TOKEN;
+const urlBack = process.env.URL_BACK;
 
-const urlBack = "http://localhost:3000/users";
 const bot = new Bot(BOT_TOKEN); // Укажите токен бота
 
-const path = require("path");
 // const fs = require('fs');
-
-const config = require("./config");
 
 const { Crypto } = require("./functions");
 const User = require("./user");
