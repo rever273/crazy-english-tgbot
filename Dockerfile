@@ -10,7 +10,4 @@ COPY . .
 
 RUN npm install -g nodemon
 
-EXPOSE 3000
-
-ENTRYPOINT ["npm"]
-CMD ["start_dev"]
+CMD ["npm", "run", "start_dev"]
