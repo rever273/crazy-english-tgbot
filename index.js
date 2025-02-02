@@ -55,12 +55,11 @@ const registration = async (ctx) => {
     languageCode: ctx?.from?.language_code ? ctx.from.language_code : "en",
     isPremium: ctx?.from?.is_premium ? ctx.from.is_premium : false,
   };
-  console.log(ctx.from);
-  const userByTgId = await axios.get(`${urlBack}/${data.tgId}`);
-  if (!userByTgId?.data?.tgId) {
+  try {
+    await axios.get(`${urlBack}/${data.tgId}`);
+  } catch {
     await axios.post(urlBack, data);
   }
-  return;
 };
 
 // Приветственное сообщение
