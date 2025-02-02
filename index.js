@@ -309,11 +309,6 @@ async function userRegistration(ctx) {
     console.log(
       `[Bot Start] Новый участник зарегистрирован: ${UserString(ctx.from)}`
     );
-
-    console.error(
-      "[Bot Start] Error during registration:",
-      error.response?.data || error.message
-    );
   }
 
   return data;
