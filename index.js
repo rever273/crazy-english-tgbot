@@ -40,12 +40,27 @@ bot.use(i18n.middleware());
 
 // bot.use(async (ctx, next) => {
 //     console.log("Language detected:", ctx.i18n?.locale ?? "No language set");
-//      await next(); 
+//      await next();
 // });
 
 bot.catch((err) => {
   console.error("Error in middleware:", err);
 });
+
+const registration = async (ctx) => {
+  const data = {
+    tgId: ctx.from.id,
+    userName: ctx.from.username,
+    firstName: ctx.from.first_name,
+    languageCode: ctx?.from?.language_code ? ctx.from.language_code : "en",
+    isPremium: ctx?.from?.is_premium ? ctx.from.is_premium : false,
+  };
+  try {
+    await axios.get(`${urlBack}/${data.tgId}`);
+  } catch {
+    await axios.post(urlBack, data);
+  }
+};
 
 // Приветственное сообщение
 bot.command("start", async (ctx) => {
@@ -53,25 +68,23 @@ bot.command("start", async (ctx) => {
   const user = new User(ctx.from);
 
   //Записываем или обновляем пользователя в базу данных
-  const userData = await userRegistration(ctx);
+  registration(ctx);
 
   //Проверка подписки по запросу пользователя из webapp
   if (ctx.match === "check_subscription") {
     if (userData.subscribed_chat) {
       ctx.reply("✅ Вы подписаны на чат Crazy Llama Chat");
-    }
-    else {
+    } else {
       ctx.reply("❌ Вы не подписаны на чат Crazy Llama Chat");
     }
 
     if (userData.subscribed_channel) {
       ctx.reply("✅ Вы подписаны на канал Crazy Llama Channel");
-    }
-    else {
+    } else {
       ctx.reply("❌ Вы не подписаны на канал Crazy Llama Channel");
     }
 
-    //TODO по хорошему надо сделать логику возвращения результата подписки в webapp, но пока не могу придумать как. 
+    //TODO по хорошему надо сделать логику возвращения результата подписки в webapp, но пока не могу придумать как.
     //Пока просто интервальная проверка результатов из базы
     if (userData.subscribed_chat && userData.subscribed_channel) {
       return ctx.reply("👍 Вы подписаны на все каналы и чаты");
@@ -121,7 +134,7 @@ ${ctx.t("invite_link", { link: referralLink })}`;
 
 // Обработчик добавления новых участников в чат и добавление данных о них в базу
 //Примчание: работает только в супергруппах
-bot.on(['message:new_chat_members', 'chat_member'], async (ctx) => {
+bot.on(["message:new_chat_members", "chat_member"], async (ctx) => {
   const newMembers = getNewChatMembers(ctx);
 
   if (!newMembers.length) return;
@@ -138,14 +151,20 @@ bot.on(['message:new_chat_members', 'chat_member'], async (ctx) => {
         tgId: userId,
       };
 
-      if (channelData.type === 'chat') updateData.subscribed_chat = true;
-      if (channelData.type === 'channel') updateData.subscribed_channel = true;
+      if (channelData.type === "chat") updateData.subscribed_chat = true;
+      if (channelData.type === "channel") updateData.subscribed_channel = true;
 
       await axios.put(`${urlBack}/update/`, updateData);
-      console.log(`[Bot New Member] Пользователь присоединился в ${ctx.chat.title}, обновляем данные в базе. ${UserString(ctx.from)}`);
-
+      console.log(
+        `[Bot New Member] Пользователь присоединился в ${
+          ctx.chat.title
+        }, обновляем данные в базе. ${UserString(ctx.from)}`
+      );
     } catch (error) {
-      console.error("[Bot New Member] Error updating subscription status:", error.response?.data || error.message);
+      console.error(
+        "[Bot New Member] Error updating subscription status:",
+        error.response?.data || error.message
+      );
     }
   }
 });
@@ -201,13 +220,16 @@ bot.inlineQuery(/^invite_(.+)$/, async (ctx) => {
   // console.log("4951_thumbUrl==>", thumbUrl);
   // console.log("4951_imageUrl==>", imageUrl);
 
-  const displayName = user.username ? `@${user.username}` : user.first_name || 'Пользователь';
+  const displayName = user.username
+    ? `@${user.username}`
+    : user.first_name || "Пользователь";
 
   // Формируем URL на preview-страницу
 
   //TODO По этой ссылке идет запрос на сайт по апи, где на беке должен быть редирект обратно в ТГ бота с реферальной ссылкой
   //Сейчас это не работает, т.к. не закончена проверка на беке
-  const previewUrl = `${config.website}/api/users/preview?` +
+  const previewUrl =
+    `${config.website}/api/users/preview?` +
     `username=${encodeURIComponent(displayName)}&` +
     `encryptedId=${encryptedId}`;
 
@@ -251,7 +273,11 @@ async function checkReferralCode(ctx, text) {
         return;
       }
 
-      console.log(`[Bot Referral] Пользователь ${UserString(ctx.from)} был приглашен пользователем с ID ${referral_id}`);
+      console.log(
+        `[Bot Referral] Пользователь ${UserString(
+          ctx.from
+        )} был приглашен пользователем с ID ${referral_id}`
+      );
       //TODO Добавить к данному пользователю значение referral_id в колонку referral в DB
     }
   }
@@ -259,22 +285,27 @@ async function checkReferralCode(ctx, text) {
 
 // Регистрация пользователя в базе данных
 async function userRegistration(ctx) {
-  const { subscribed_chat, subscribed_channel } = await Subscription.checkUserSubscription(ctx, ctx.from.id);
+  const { subscribed_chat, subscribed_channel } =
+    await Subscription.checkUserSubscription(ctx, ctx.from.id);
 
   const data = {
     tgId: String(ctx.from.id), //BIGINT (Убрать String)
     userName: ctx.from?.username || "", //String
     firstName: ctx.from.first_name, //String
-    lastName: ctx.from?.last_name || "",  //String
+    lastName: ctx.from?.last_name || "", //String
     languageCode: ctx?.from?.language_code || "en", //String
     isPremium: ctx?.from?.is_premium || false, //Boolean
     added_to_attachment_menu: ctx?.from?.added_to_attachment_menu || false, //Boolean
     //TODO добавить в базу данных колонки с информацией о подписке на ресурсы
     subscribed_chat, //Boolean по умолчанию false
-    subscribed_channel //Boolean по умолчанию false
+    subscribed_channel, //Boolean по умолчанию false
   };
 
-  console.log("0707_subscribed_chat, subscribed_channel==>", subscribed_chat, subscribed_channel);
+  console.log(
+    "0707_subscribed_chat, subscribed_channel==>",
+    subscribed_chat,
+    subscribed_channel
+  );
 
   try {
     // Проверяем, есть ли пользователь в базе
@@ -284,23 +315,31 @@ async function userRegistration(ctx) {
     if (!existingUser?.tgId) {
       // Если пользователя нет, создаем его
       await axios.post(urlBack, data);
-      console.log(`[Bot Start] Новый участник зарегистрирован: ${UserString(ctx.from)}`);
-    }
-    else {
+      console.log(
+        `[Bot Start] Новый участник зарегистрирован: ${UserString(ctx.from)}`
+      );
+    } else {
       // Если пользователь есть, проверяем, изменились ли данные
-      const hasChanges = Object.keys(data).some((key) => data[key] !== existingUser[key]);
+      const hasChanges = Object.keys(data).some(
+        (key) => data[key] !== existingUser[key]
+      );
       if (hasChanges) {
         // Обновляем пользователя, если данные изменились
         await axios.put(`${urlBack}/update/`, data);
-        console.log(`[Bot Start] Пользователь обновлен: ${UserString(ctx.from)}`);
+        console.log(
+          `[Bot Start] Пользователь обновлен: ${UserString(ctx.from)}`
+        );
       }
     }
   } catch (error) {
-    console.error("[Bot Start] Error during registration:", error.response?.data || error.message);
+    console.error(
+      "[Bot Start] Error during registration:",
+      error.response?.data || error.message
+    );
   }
 
   return data;
-};
+}
 
 // Запуск бота
 bot.start();
