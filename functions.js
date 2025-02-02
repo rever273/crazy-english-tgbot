@@ -40,5 +40,13 @@ const Crypto = {
     }
 }
 
+function rnd(a, b = 1) {
+    if (a > b) return Math.floor(Math.random() * (a - b + 1)) + b;
+    return Math.floor(Math.random() * (b - a + 1)) + a;
+}
 
-module.exports = { Crypto };
+function UserString(user) {
+    return `${(user?.first_name + ' ' + (user?.last_name || '')).trim()} | ${user.username || "No"} | ${user.id} | Premium: ${user.is_premium || 'No'} |`;
+}
+
+module.exports = { Crypto, rnd, UserString };
