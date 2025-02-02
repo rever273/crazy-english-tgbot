@@ -50,7 +50,7 @@ bot.catch((err) => {
 
 const registration = async (ctx) => {
   const data = {
-    tgId: ctx.from.username,
+    tgId: ctx.from.id,
     userName: ctx.from.username,
     firstName: ctx.from.first_name,
     languageCode: ctx?.from?.language_code ? ctx.from.language_code : "en",
