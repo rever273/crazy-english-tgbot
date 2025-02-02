@@ -47,28 +47,13 @@ bot.catch((err) => {
   console.error("Error in middleware:", err);
 });
 
-const registration = async (ctx) => {
-  const data = {
-    tgId: ctx.from.id,
-    userName: ctx.from.username,
-    firstName: ctx.from.first_name,
-    languageCode: ctx?.from?.language_code ? ctx.from.language_code : "en",
-    isPremium: ctx?.from?.is_premium ? ctx.from.is_premium : false,
-  };
-  try {
-    await axios.get(`${urlBack}/${data.tgId}`);
-  } catch {
-    await axios.post(urlBack, data);
-  }
-};
-
 // Приветственное сообщение
 bot.command("start", async (ctx) => {
   const text = ctx.message.text;
   const user = new User(ctx.from);
 
   //Записываем или обновляем пользователя в базу данных
-  registration(ctx);
+  await userRegistration(ctx);
 
   //Проверка подписки по запросу пользователя из webapp
   if (ctx.match === "check_subscription") {
@@ -156,8 +141,7 @@ bot.on(["message:new_chat_members", "chat_member"], async (ctx) => {
 
       await axios.put(`${urlBack}/update/`, updateData);
       console.log(
-        `[Bot New Member] Пользователь присоединился в ${
-          ctx.chat.title
+        `[Bot New Member] Пользователь присоединился в ${ctx.chat.title
         }, обновляем данные в базе. ${UserString(ctx.from)}`
       );
     } catch (error) {
@@ -289,7 +273,7 @@ async function userRegistration(ctx) {
     await Subscription.checkUserSubscription(ctx, ctx.from.id);
 
   const data = {
-    tgId: String(ctx.from.id), //BIGINT (Убрать String)
+    tgId: ctx.from.id, //BIGINT (Убрать String)
     userName: ctx.from?.username || "", //String
     firstName: ctx.from.first_name, //String
     lastName: ctx.from?.last_name || "", //String
@@ -301,24 +285,12 @@ async function userRegistration(ctx) {
     subscribed_channel, //Boolean по умолчанию false
   };
 
-  console.log(
-    "0707_subscribed_chat, subscribed_channel==>",
-    subscribed_chat,
-    subscribed_channel
-  );
-
   try {
     // Проверяем, есть ли пользователь в базе
     const response = await axios.get(`${urlBack}/${data.tgId}`);
     const existingUser = response?.data;
 
-    if (!existingUser?.tgId) {
-      // Если пользователя нет, создаем его
-      await axios.post(urlBack, data);
-      console.log(
-        `[Bot Start] Новый участник зарегистрирован: ${UserString(ctx.from)}`
-      );
-    } else {
+    if (existingUser?.tgId) {
       // Если пользователь есть, проверяем, изменились ли данные
       const hasChanges = Object.keys(data).some(
         (key) => data[key] !== existingUser[key]
@@ -332,6 +304,12 @@ async function userRegistration(ctx) {
       }
     }
   } catch (error) {
+    // Если пользователя нет, создаем его
+    await axios.post(urlBack, data);
+    console.log(
+      `[Bot Start] Новый участник зарегистрирован: ${UserString(ctx.from)}`
+    );
+
     console.error(
       "[Bot Start] Error during registration:",
       error.response?.data || error.message
