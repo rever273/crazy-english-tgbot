@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "start_dev": "dotenv -e .env.development nodemon index.js",
-    "start_prod": "dotenv -e .env.production nodemon index.js",
+    "start_prod": "dotenv -e .env.production node index.js",
     "built": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
