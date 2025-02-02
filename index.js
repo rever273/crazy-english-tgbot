@@ -102,7 +102,8 @@ ${ctx.t("invite_link", { link: referralLink })}`;
     caption: msg_text,
     parse_mode: "HTML",
     reply_markup: new InlineKeyboard()
-      .webApp(ctx.t("btn.open"), "https://forward2.hive-dev.ru/welcome")
+      // .webApp(ctx.t("btn.open"), "https://forward2.hive-dev.ru/welcome")
+      .webApp(ctx.t("btn.open"), process.env.WEBSITE)
       .row()
       // .url("Поделиться", shareUrl)
       .url(ctx.t("btn.support"), config.supportBot)
