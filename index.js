@@ -1,13 +1,15 @@
-require("dotenv").config({ path: ".env.development" });
+require("dotenv").config(); //{ path: ".env.development" }
 
 const { session, Bot, InlineKeyboard, InputFile } = require("grammy");
 const path = require("path");
 const { I18n } = require("@grammyjs/i18n");
 const axios = require("axios");
 const config = require("./config");
+const cron = require('node-cron');
 
 const { Crypto, UserString } = require("./functions");
 const Subscription = require("./checkUserSubscription");
+const { checkAndSendMistakeReports } = require("./checkUsersReport");
 const User = require("./user");
 // const fs = require('fs');
 
@@ -16,6 +18,13 @@ const BOT_TOKEN = process.env.BOT_TOKEN;
 const urlBack = process.env.URL_BACK;
 
 const bot = new Bot(BOT_TOKEN); // Укажите токен бота
+
+// checkAndSendMistakeReports(bot);
+// Запуск проверки наличия новых уведомлений от пользователя об ошибках каждые 5 минут
+cron.schedule('*/1 * * * *', () => {
+  //TODO добавить фактический запрос к базе данных
+  checkAndSendMistakeReports(bot);
+});
 
 // Инициализация i18n
 const i18n = new I18n({
@@ -116,6 +125,7 @@ ${ctx.t("invite_link", { link: referralLink })}`;
     await ctx.api.pinChatMessage(ctx.chat.id, sentMessage.message_id);
   }
 });
+
 
 // Обработчик добавления новых участников в чат и добавление данных о них в базу
 //Примчание: работает только в супергруппах
