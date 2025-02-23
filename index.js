@@ -61,9 +61,6 @@ bot.command('start', async (ctx) => {
     const text = ctx.message.text;
     const user = new User(ctx.from);
 
-    //Записываем или обновляем пользователя в базу данных
-    await userRegistration(ctx);
-
     //Проверка подписки по запросу пользователя из webapp
     if (ctx.match === 'check_subscription') {
         if (userData.subscribed_chat) {
@@ -87,6 +84,9 @@ bot.command('start', async (ctx) => {
 
     //проверяем, реферальный ли код у пользователя
     await checkReferralCode(ctx, text);
+
+    //Записываем или обновляем пользователя в базу данных
+    await userRegistration(ctx);
 
     // Получаем и назначаем язык пользователя
     const userLanguage = ctx.from.language_code || 'en';
@@ -225,10 +225,12 @@ bot.inlineQuery(/^invite_(.+)$/, async (ctx) => {
 
     //TODO По этой ссылке идет запрос на сайт по апи, где на беке должен быть редирект обратно в ТГ бота с реферальной ссылкой
     //Сейчас это не работает, т.к. не закончена проверка на беке
-    const previewUrl =
-        `${config.website}/api/users/preview?` +
-        `username=${encodeURIComponent(displayName)}&` +
-        `encryptedId=${encryptedId}`;
+
+    // const previewUrl =
+    // `${config.website}/api/users/preview?` +
+    //     `username=${encodeURIComponent(displayName)}&` +
+    //     `encryptedId=${encryptedId}`;
+    const previewUrl = `${config.website}/api/users/preview/${displayName}/${encryptedId}`;
 
     // Создаем результат для инлайн-меню
     const results = [
@@ -257,35 +259,38 @@ bot.inlineQuery(/^invite_(.+)$/, async (ctx) => {
 async function checkReferralCode(ctx, text) {
     if (text.includes(' ')) {
         const args = text.split(' '); // Разделяем текст команды
+
         if (args.length > 1) {
             let referralCode = args[1].startsWith('invite_')
-                ? (referralCode = args[1].replace('invite_', ''))
+                ? args[1].replace('invite_', '')
                 : args[1]; //Извлекаем зашифрованный ID
 
             const user_id = ctx.from.id;
+
             const referral_id = Crypto.decryptUserId(referralCode); // Расшифровываем ID
 
             //Пользователь совпадает или не имеет реферала
-            if (!referral_id || referral_id == '' || user_id == referral_id) {
+            if (!referral_id || referral_id === '' || user_id === referral_id) {
                 return;
             }
+
+            const data = {
+                tgId: referral_id,
+                referral: {
+                    tgId: ctx.from.id,
+                    username: ctx.from.username,
+                },
+            };
+
+            await axios.put(`${config.website}/api/users/update`, data);
 
             console.log(
                 `[Bot Referral] Пользователь ${UserString(
                     ctx.from
                 )} был приглашен пользователем с ID ${referral_id}`
             );
-            //TODO Добавить к данному пользователю значение referral_id в колонку referral в DB
         }
     }
-}
-
-async function getRef(ctx) {
-    await axios.get(
-        `${urlBack}/preview/${ctx.from.username}/${Math.floor(
-            Math.random() * 11
-        )}`
-    );
 }
 
 // Регистрация пользователя в базе данных
