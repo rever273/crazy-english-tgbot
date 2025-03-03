@@ -19,11 +19,15 @@ const urlBack = process.env.URL_BACK;
 
 const bot = new Bot(BOT_TOKEN); // Укажите токен бота
 
-// checkAndSendMistakeReports(bot);
 // Запуск проверки наличия новых уведомлений от пользователя об ошибках каждые 5 минут
-cron.schedule('*/1 * * * *', () => {
+cron.schedule('*/30 * * * *', () => {
     //TODO добавить фактический запрос к базе данных
     checkAndSendMistakeReports(bot);
+});
+
+//Раз в сутки выполняем проверку подписок всех пользователей
+cron.schedule('* 2 * * *', () => {
+    Subscription.checkAllUsersSubscription(bot);
 });
 
 // Инициализация i18n
@@ -61,32 +65,33 @@ bot.command('start', async (ctx) => {
     const text = ctx.message.text;
     const user = new User(ctx.from);
 
-    //Проверка подписки по запросу пользователя из webapp
+    //Проверка подписки по запросу пользователя из фронта webapp
     if (ctx.match === 'check_subscription') {
-        if (userData.subscribed_chat) {
+        const { subscribed_chat, subscribed_channel } = Subscription.checkUserSubscription(ctx, ctx.from.id);
+
+        if (subscribed_chat) {
             ctx.reply('✅ Вы подписаны на чат Crazy Llama Chat');
         } else {
             ctx.reply('❌ Вы не подписаны на чат Crazy Llama Chat');
         }
 
-        if (userData.subscribed_channel) {
+        if (subscribed_channel) {
             ctx.reply('✅ Вы подписаны на канал Crazy Llama Channel');
         } else {
             ctx.reply('❌ Вы не подписаны на канал Crazy Llama Channel');
         }
 
-        //TODO по хорошему надо сделать логику возвращения результата подписки в webapp, но пока не могу придумать как.
         //Пока просто интервальная проверка результатов из базы
-        if (userData.subscribed_chat && userData.subscribed_channel) {
+        if (subscribed_chat && subscribed_channel) {
             return ctx.reply('👍 Вы подписаны на все каналы и чаты');
         }
     }
 
-    //проверяем, реферальный ли код у пользователя
-    await checkReferralCode(ctx, text);
-
     //Записываем или обновляем пользователя в базу данных
     await userRegistration(ctx);
+
+    //проверяем, реферальный ли код у пользователя
+    await checkReferralCode(ctx, text);
 
     // Получаем и назначаем язык пользователя
     const userLanguage = ctx.from.language_code || 'en';
@@ -94,7 +99,7 @@ bot.command('start', async (ctx) => {
 
     const encryptedId = Crypto.encryptUserId(user.user_id); // Шифруем ID пользователя
     const referralCode = `invite_${encryptedId}`;
-    const referralLink = `${config.botUrl}?start=${referralCode}`;
+    const referralLink = `${process.env.BOT_URL}?start=${referralCode}`;
 
     const imagePath = path.join(__dirname, './src/images/banner.jpg');
 
@@ -121,7 +126,7 @@ ${ctx.t('invite_link', { link: referralLink })}`;
 
     //Закрепляем сообщение у пользователя
     const chat = await ctx.api.getChat(ctx.chat.id);
-    if (!chat.pinned_message) {
+    if (!chat.pinned_message?.message_id) {
         await ctx.api.pinChatMessage(ctx.chat.id, sentMessage.message_id);
     }
 });
@@ -141,6 +146,7 @@ bot.on(['message:new_chat_members', 'chat_member'], async (ctx) => {
             const channelData = Subscription.ourChannels.find(
                 (c) => c.id === chatId
             );
+
             if (!channelData) return;
 
             const updateData = {
@@ -152,9 +158,9 @@ bot.on(['message:new_chat_members', 'chat_member'], async (ctx) => {
                 updateData.subscribed_channel = true;
 
             await axios.put(`${urlBack}/update/`, updateData);
+
             console.log(
-                `[Bot New Member] Пользователь присоединился в ${
-                    ctx.chat.title
+                `[Bot New Member] Пользователь присоединился в ${ctx.chat.title
                 }, обновляем данные в базе. ${UserString(ctx.from)}`
             );
         } catch (error) {
@@ -212,9 +218,9 @@ bot.inlineQuery(/^invite_(.+)$/, async (ctx) => {
     ctx.i18n.useLocale(userLanguage);
 
     const user = new User(ctx.from);
-    const thumbUrl = `${config.website}/images/tg_bot/inline_llama_thumb.jpg`;
+    const thumbUrl = `${process.env.WEBSITE}/images/tg_bot/inline_llama_thumb.jpg`;
 
-    // console.log("4951_thumbUrl==>", thumbUrl);
+    console.log("4951_thumbUrl==>", thumbUrl);
     // console.log("4951_imageUrl==>", imageUrl);
 
     const displayName = user.username
@@ -222,16 +228,10 @@ bot.inlineQuery(/^invite_(.+)$/, async (ctx) => {
         : user.first_name || 'Пользователь';
 
     // Формируем URL на preview-страницу
+    // const previewUrl = `http://localhost:3000/api/users/preview/${displayName}/${encryptedId}`;
+    const previewUrl = `${process.env.WEBSITE}/api/users/preview/${displayName}/${encryptedId}`;
 
-    //TODO По этой ссылке идет запрос на сайт по апи, где на беке должен быть редирект обратно в ТГ бота с реферальной ссылкой
-    //Сейчас это не работает, т.к. не закончена проверка на беке
-
-    // const previewUrl =
-    // `${config.website}/api/users/preview?` +
-    //     `username=${encodeURIComponent(displayName)}&` +
-    //     `encryptedId=${encryptedId}`;
-    const previewUrl = `${config.website}/api/users/preview/${displayName}/${encryptedId}`;
-
+    console.log("1059_previewUrl==>", previewUrl);
     // Создаем результат для инлайн-меню
     const results = [
         {
@@ -239,7 +239,7 @@ bot.inlineQuery(/^invite_(.+)$/, async (ctx) => {
             id: encryptedId, // Уникальный идентификатор результата
             title: ctx.t('inline.title'),
             description: ctx.t('inline.description'),
-            thumb_url: `${thumbUrl}?v=${Date.now()}`, // Превью картинки
+            thumb_url: `${thumbUrl}`, // Превью картинки ?v=${Date.now()}
             input_message_content: {
                 message_text: `<a href="${previewUrl}">🦙🦙🦙</a>`,
                 parse_mode: 'HTML',
@@ -247,7 +247,7 @@ bot.inlineQuery(/^invite_(.+)$/, async (ctx) => {
             },
             reply_markup: new InlineKeyboard().url(
                 ctx.t('btn.study'),
-                previewUrl // Теперь ведет на страницу с Open Graph превью
+                `${process.env.BOT_URL}?start=invite_${encryptedId}` // Теперь ведет на страницу с Open Graph превью
             ),
         },
     ];
@@ -274,15 +274,21 @@ async function checkReferralCode(ctx, text) {
                 return;
             }
 
-            const data = {
-                tgId: referral_id,
-                referral: {
-                    tgId: ctx.from.id,
-                    username: ctx.from.username,
-                },
-            };
+            // const data = {
+            //     tgId: referral_id,
+            //     referral: {
+            //         tgId: ctx.from.id,
+            //         username: ctx.from.username,
+            //     },
+            // };
 
-            await axios.put(`${config.website}/api/users/update`, data);
+            //TODO добавить в базу колонку реферала
+            const data = {
+                tgId: ctx.from.id,
+                referral: referral_id
+            }
+
+            await axios.put(`${process.env.WEBSITE}/api/users/update`, data);
 
             console.log(
                 `[Bot Referral] Пользователь ${UserString(
@@ -320,6 +326,7 @@ async function userRegistration(ctx) {
             const hasChanges = Object.keys(data).some(
                 (key) => data[key] !== existingUser[key]
             );
+
             if (hasChanges) {
                 // Обновляем пользователя, если данные изменились
                 await axios.put(`${urlBack}/update/`, data);

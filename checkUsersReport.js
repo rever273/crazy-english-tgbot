@@ -3,7 +3,7 @@
 async function checkAndSendMistakeReports(bot) {
 
     if (process.env.NODE_ENV == 'development') {
-        console.log('Режим разработки: сообщения в Telegram не отправляются.');
+        // console.log('Режим разработки: сообщения в Telegram не отправляются.');
         return;
     }
 
