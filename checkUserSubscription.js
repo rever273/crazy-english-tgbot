@@ -1,3 +1,4 @@
+const axios = require('axios');
 
 const Subscription = {
     ourChannels: [
@@ -33,6 +34,39 @@ const Subscription = {
         //     url: 'https://t.me/CrazyLlamaFarmRU'
         // },
     ],
+
+    /**
+     * Проверяет подписку всех пользователей на все необходимые каналы.
+     */
+    async checkAllUsersSubscription(bot) {
+        //TODO добавить получение ID всех пользователей по АПИ, чтобы проверить по ним актуальную подписку
+
+        //временно
+        const users = [
+            { id: 5401716621 },
+        ];
+
+        for (const user of users) {
+            const { subscribed_chat, subscribed_channel } = await this.checkUserSubscription(bot, user.id);
+
+            if (!subscribed_chat) {
+                console.log(`[Bot Subscription] Пользователь ${user.id} не подписан на чат Crazy Llama Chat`);
+            }
+
+            if (!subscribed_channel) {
+                console.log(`[Bot Subscription] Пользователь ${user.id} не подписан на канал Crazy Llama Channel`);
+            }
+
+            //Убедится, что данные по подписке обновляются в базе, сейчас этого нет. 
+            const updateData = {
+                tgId: user.id,
+                subscribed_chat,
+                subscribed_channel
+            };
+
+            await axios.put(`${process.env.URL_BACK}/update/`, updateData);
+        }
+    },
 
     /**
      * Проверяет подписку пользователя на все необходимые каналы.
