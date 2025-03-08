@@ -6,6 +6,7 @@ const { I18n } = require('@grammyjs/i18n');
 const axios = require('axios');
 const config = require('./config');
 const cron = require('node-cron');
+const trimDisplayName = require('./clearName');
 
 const { Crypto, UserString } = require('./functions');
 const Subscription = require('./checkUserSubscription');
@@ -82,11 +83,11 @@ bot.command('start', async (ctx) => {
         }
     }
 
-    //проверяем, реферальный ли код у пользователя
-    await checkReferralCode(ctx, text);
-
     //Записываем или обновляем пользователя в базу данных
     await userRegistration(ctx);
+
+    //проверяем, реферальный ли код у пользователя
+    await checkReferralCode(ctx, text);
 
     // Получаем и назначаем язык пользователя
     const userLanguage = ctx.from.language_code || 'en';
@@ -212,7 +213,7 @@ bot.inlineQuery(/^invite_(.+)$/, async (ctx) => {
     ctx.i18n.useLocale(userLanguage);
 
     const user = new User(ctx.from);
-    const thumbUrl = `${config.website}/images/tg_bot/inline_llama_thumb.jpg`;
+    const thumbUrl = `${config.website}/images/tg_bot/inline_llama_2.jpg`;
 
     // console.log("4951_thumbUrl==>", thumbUrl);
     // console.log("4951_imageUrl==>", imageUrl);
@@ -269,20 +270,22 @@ async function checkReferralCode(ctx, text) {
 
             const referral_id = Crypto.decryptUserId(referralCode); // Расшифровываем ID
 
+            console.log(user_id, referral_id);
+
+            console.log(
+                !referral_id || referral_id === '' || user_id === referral_id
+            );
             //Пользователь совпадает или не имеет реферала
             if (!referral_id || referral_id === '' || user_id === referral_id) {
                 return;
             }
 
             const data = {
-                tgId: referral_id,
-                referral: {
-                    tgId: ctx.from.id,
-                    username: ctx.from.username,
-                },
+                tgId: user_id,
+                refTgId: referral_id,
             };
 
-            await axios.put(`${config.website}/api/users/update`, data);
+            await axios.post(`${config.website}/api/users/ref`, data);
 
             console.log(
                 `[Bot Referral] Пользователь ${UserString(
