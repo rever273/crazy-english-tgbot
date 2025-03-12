@@ -39,9 +39,9 @@ const Subscription = {
      * Проверяет подписку всех пользователей на все необходимые каналы.
      */
     async checkAllUsersSubscription(bot) {
-        //TODO добавить получение ID всех пользователей по АПИ, чтобы проверить по ним актуальную подписку
+        //TODO добавить получение ID всех пользователей по АПИ из базы, чтобы проверить по ним актуальную подписку каждого раз в интервал.
 
-        //временно
+        //временно (получить отдельным запросом списсок всех пользователей)
         const users = [
             { id: 5401716621 },
         ];
@@ -81,6 +81,7 @@ const Subscription = {
         for (const channel of this.ourChannels) {
             try {
                 const member = await ctx.api.getChatMember(channel.id, userId);
+
                 const isSubscribed = ['member', 'administrator', 'creator', 'restricted'].includes(member.status);
 
                 if (isSubscribed) {
@@ -91,6 +92,14 @@ const Subscription = {
                 console.error(`[Bot Subscription] Ошибка проверки подписки на ${channel.name}:`, error.message);
             }
         }
+
+        const updateData = {
+            tgId: userId, //123
+            subscribed_chat,
+            subscribed_channel
+        };
+
+        await axios.put(`${process.env.URL_BACK}/update/`, updateData);
 
         return { subscribed_chat, subscribed_channel };
     }
