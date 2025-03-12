@@ -1,7 +1,7 @@
-const crypto = require("crypto"); // Для шифрования ID
+const crypto = require('crypto'); // Для шифрования ID
 
 // Ключ для шифрования (замените на уникальный и секретный ключ)
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY.padEnd(16, "0").slice(0, 16); // Приводим к 32 символам // 32 байта для AES-256
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY.padEnd(16, '0').slice(0, 16); // Приводим к 32 символам // 32 байта для AES-256
 const IV_LENGTH = 16; // Длина инициализационного вектора
 
 // Функция для шифрования ID пользователя
@@ -25,20 +25,30 @@ const Crypto = {
 
     encryptUserId(userId) {
         return Buffer.from(userId.toString())
-            .toString("base64")
-            .replace(/=/g, "") // Убираем `=`
-            .replace(/\+/g, "-") // Заменяем `+` на `-`
-            .replace(/\//g, "_"); // Заменяем `/` на `_`
+            .toString('base64')
+            .replace(/=/g, '') // Убираем `=`
+            .replace(/\+/g, '-') // Заменяем `+` на `-`
+            .replace(/\//g, '_'); // Заменяем `/` на `_`
     },
 
     // Расшифровка: преобразуем Base64 обратно в userId
     decryptUserId(encrypted) {
         return Buffer.from(
-            encrypted.replace(/-/g, "+").replace(/_/g, "/"), // Восстанавливаем символы
-            "base64"
-        ).toString("utf8");
-    }
+            encrypted.replace(/-/g, '+').replace(/_/g, '/'), // Восстанавливаем символы
+            'base64'
+        ).toString('utf8');
+    },
+};
+
+function rnd(a, b = 1) {
+    if (a > b) return Math.floor(Math.random() * (a - b + 1)) + b;
+    return Math.floor(Math.random() * (b - a + 1)) + a;
 }
 
+function UserString(user) {
+    return `${(user?.first_name + ' ' + (user?.last_name || '')).trim()} | ${
+        user.username || 'No'
+    } | ${user.id} | Premium: ${user.is_premium || 'No'} |`;
+}
 
-module.exports = { Crypto };
+module.exports = { Crypto, rnd, UserString };
