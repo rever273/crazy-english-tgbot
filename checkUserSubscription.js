@@ -82,7 +82,7 @@ const Subscription = {
      * @param {string} userId - ID пользователя в Telegram.
      * @returns {boolean} true, если пользователь подписан на все каналы.
      */
-    async checkUserSubscription(ctx, userId) {
+    async checkUserSubscription(ctx, userId, operation) {
         let subscribed_chat = false;
         let subscribed_channel = false;
 
@@ -115,7 +115,8 @@ const Subscription = {
             subscribed_channel,
         };
 
-        await axios.put(`${process.env.URL_BACK}/update/`, updateData);
+        if (operation !== 'create')
+            await axios.put(`${process.env.URL_BACK}/update/`, updateData);
 
         return { subscribed_chat, subscribed_channel };
     },

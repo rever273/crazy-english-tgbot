@@ -66,6 +66,8 @@ bot.command('start', async (ctx) => {
     const text = ctx.message.text;
     const user = new User(ctx.from);
 
+    console.log(1);
+
     //Записываем или обновляем пользователя в базу данных
     const opration = await userRegistrationOrUpdate(ctx);
 
@@ -307,7 +309,11 @@ async function checkReferralCode(ctx, text) {
 // Регистрация пользователя в базе данных
 async function userRegistrationOrUpdate(ctx) {
     const { subscribed_chat, subscribed_channel } =
-        await Subscription.checkUserSubscription(ctx, ctx.from.id);
+        await Subscription.checkUserSubscription(
+            ctx,
+            ctx.from.id,
+            (operation = 'create')
+        );
 
     const data = {
         tgId: ctx.from.id, //BIGINT (Убрать String)
