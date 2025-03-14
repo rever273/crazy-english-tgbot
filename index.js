@@ -295,7 +295,7 @@ async function checkReferralCode(ctx, text) {
                 refTgId: referral_id,
             };
 
-            await axios.post(`${config.website}/api/users/ref`, data);
+            await axios.post(`${urlBack}/users/ref`, data);
 
             console.log(
                 `[Bot Referral] Пользователь ${UserString(
