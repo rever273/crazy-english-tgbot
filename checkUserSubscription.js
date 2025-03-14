@@ -89,6 +89,7 @@ const Subscription = {
         for (const channel of this.ourChannels) {
             try {
                 const member = await ctx.api.getChatMember(channel.id, userId);
+
                 const isSubscribed = [
                     'member',
                     'administrator',
@@ -107,6 +108,14 @@ const Subscription = {
                 );
             }
         }
+
+        const updateData = {
+            tgId: userId, //123
+            subscribed_chat,
+            subscribed_channel,
+        };
+
+        await axios.put(`${process.env.URL_BACK}/update/`, updateData);
 
         return { subscribed_chat, subscribed_channel };
     },

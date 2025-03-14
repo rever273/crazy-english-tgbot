@@ -68,25 +68,25 @@ bot.command('start', async (ctx) => {
 
     //Проверка подписки по запросу пользователя из фронта webapp
     if (ctx.match === 'check_subscription') {
-        const { subscribed_chat, subscribed_channel } =
-            Subscription.checkUserSubscription(ctx, ctx.from.id);
+        const { subscribed_chat, subscribed_channel } = await Subscription.checkUserSubscription(ctx, ctx.from.id);
 
         if (subscribed_chat) {
             ctx.reply('✅ Вы подписаны на чат Crazy Llama Chat');
         } else {
-            ctx.reply('❌ Вы не подписаны на чат Crazy Llama Chat');
+            ctx.reply('❌ Вы не подписаны на чат Crazy Llama Chat @CrazyLlamaFarmRU_chat');
         }
 
         if (subscribed_channel) {
             ctx.reply('✅ Вы подписаны на канал Crazy Llama Channel');
         } else {
-            ctx.reply('❌ Вы не подписаны на канал Crazy Llama Channel');
+            ctx.reply('❌ Вы не подписаны на канал Crazy Llama Channel @CrazyLlamaFarmRU');
         }
 
         //Пока просто интервальная проверка результатов из базы
         if (subscribed_chat && subscribed_channel) {
             return ctx.reply('👍 Вы подписаны на все каналы и чаты');
         }
+        return;
     }
 
     //Записываем или обновляем пользователя в базу данных
@@ -162,8 +162,7 @@ bot.on(['message:new_chat_members', 'chat_member'], async (ctx) => {
             await axios.put(`${urlBack}/update/`, updateData);
 
             console.log(
-                `[Bot New Member] Пользователь присоединился в ${
-                    ctx.chat.title
+                `[Bot New Member] Пользователь присоединился в ${ctx.chat.title
                 }, обновляем данные в базе. ${UserString(ctx.from)}`
             );
         } catch (error) {
@@ -223,9 +222,6 @@ bot.inlineQuery(/^invite_(.+)$/, async (ctx) => {
     const user = new User(ctx.from);
     const thumbUrl = `${process.env.WEBSITE}/images/tg_bot/inline_llama_thumb.jpg`;
 
-    console.log('4951_thumbUrl==>', thumbUrl);
-    // console.log("4951_imageUrl==>", imageUrl);
-
     const displayName = user.username
         ? `@${user.username}`
         : user.first_name || 'Пользователь';
@@ -234,7 +230,6 @@ bot.inlineQuery(/^invite_(.+)$/, async (ctx) => {
     // const previewUrl = `http://localhost:3000/api/users/preview/${displayName}/${encryptedId}`;
     const previewUrl = `${process.env.WEBSITE}/api/users/preview/${displayName}/${encryptedId}`;
 
-    console.log('1059_previewUrl==>', previewUrl);
     // Создаем результат для инлайн-меню
     const results = [
         {
@@ -304,7 +299,7 @@ async function checkReferralCode(ctx, text) {
 // Регистрация пользователя в базе данных
 async function userRegistrationOrUpdate(ctx) {
     const { subscribed_chat, subscribed_channel } =
-        Subscription.checkUserSubscription(ctx, ctx.from.id);
+        await Subscription.checkUserSubscription(ctx, ctx.from.id);
 
     const data = {
         tgId: ctx.from.id, //BIGINT (Убрать String)
