@@ -90,10 +90,10 @@ bot.command('start', async (ctx) => {
     }
 
     //Записываем или обновляем пользователя в базу данных
-    await userRegistration(ctx);
+    const opration = await userRegistrationOrUpdate(ctx);
 
     //проверяем, реферальный ли код у пользователя
-    await checkReferralCode(ctx, text);
+    if (opration === 'create') await checkReferralCode(ctx, text);
 
     // Получаем и назначаем язык пользователя
     const userLanguage = ctx.from.language_code || 'en';
@@ -272,11 +272,6 @@ async function checkReferralCode(ctx, text) {
 
             const referral_id = Crypto.decryptUserId(referralCode); // Расшифровываем ID
 
-            console.log(user_id, referral_id);
-
-            console.log(
-                !referral_id || referral_id === '' || user_id === referral_id
-            );
             //Пользователь совпадает или не имеет реферала
             if (!referral_id || referral_id === '' || user_id === referral_id) {
                 return;
@@ -290,7 +285,6 @@ async function checkReferralCode(ctx, text) {
             //     },
             // };
 
-            //TODO добавить в базу колонку реферала
             const data = {
                 tgId: user_id,
                 refTgId: referral_id,
@@ -308,7 +302,7 @@ async function checkReferralCode(ctx, text) {
 }
 
 // Регистрация пользователя в базе данных
-async function userRegistration(ctx) {
+async function userRegistrationOrUpdate(ctx) {
     const { subscribed_chat, subscribed_channel } =
         Subscription.checkUserSubscription(ctx, ctx.from.id);
 
@@ -341,6 +335,7 @@ async function userRegistration(ctx) {
                 console.log(
                     `[Bot Start] Пользователь обновлен: ${UserString(ctx.from)}`
                 );
+                return 'update';
             }
         }
     } catch (error) {
@@ -351,9 +346,8 @@ async function userRegistration(ctx) {
                 ctx.from
             )}`
         );
+        return 'create';
     }
-
-    return data;
 }
 
 // Запуск бота
