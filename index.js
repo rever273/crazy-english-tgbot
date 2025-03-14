@@ -66,6 +66,14 @@ bot.command('start', async (ctx) => {
     const text = ctx.message.text;
     const user = new User(ctx.from);
 
+    //Записываем или обновляем пользователя в базу данных
+    const opration = await userRegistrationOrUpdate(ctx);
+
+    console.log(opration, 'opration');
+
+    //проверяем, реферальный ли код у пользователя
+    if (opration === 'create') await checkReferralCode(ctx, text);
+
     //Проверка подписки по запросу пользователя из фронта webapp
     if (ctx.match === 'check_subscription') {
         const { subscribed_chat, subscribed_channel } =
@@ -93,14 +101,6 @@ bot.command('start', async (ctx) => {
         }
         return;
     }
-
-    //Записываем или обновляем пользователя в базу данных
-    const opration = await userRegistrationOrUpdate(ctx);
-
-    console.log(opration, 'opration');
-
-    //проверяем, реферальный ли код у пользователя
-    if (opration === 'create') await checkReferralCode(ctx, text);
 
     // Получаем и назначаем язык пользователя
     const userLanguage = ctx.from.language_code || 'en';
