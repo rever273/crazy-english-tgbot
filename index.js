@@ -68,18 +68,23 @@ bot.command('start', async (ctx) => {
 
     //Проверка подписки по запросу пользователя из фронта webapp
     if (ctx.match === 'check_subscription') {
-        const { subscribed_chat, subscribed_channel } = await Subscription.checkUserSubscription(ctx, ctx.from.id);
+        const { subscribed_chat, subscribed_channel } =
+            await Subscription.checkUserSubscription(ctx, ctx.from.id);
 
         if (subscribed_chat) {
             ctx.reply('✅ Вы подписаны на чат Crazy Llama Chat');
         } else {
-            ctx.reply('❌ Вы не подписаны на чат Crazy Llama Chat @CrazyLlamaFarmRU_chat');
+            ctx.reply(
+                '❌ Вы не подписаны на чат Crazy Llama Chat @CrazyLlamaFarmRU_chat'
+            );
         }
 
         if (subscribed_channel) {
             ctx.reply('✅ Вы подписаны на канал Crazy Llama Channel');
         } else {
-            ctx.reply('❌ Вы не подписаны на канал Crazy Llama Channel @CrazyLlamaFarmRU');
+            ctx.reply(
+                '❌ Вы не подписаны на канал Crazy Llama Channel @CrazyLlamaFarmRU'
+            );
         }
 
         //Пока просто интервальная проверка результатов из базы
@@ -91,6 +96,8 @@ bot.command('start', async (ctx) => {
 
     //Записываем или обновляем пользователя в базу данных
     const opration = await userRegistrationOrUpdate(ctx);
+
+    console.log(opration, 'opration');
 
     //проверяем, реферальный ли код у пользователя
     if (opration === 'create') await checkReferralCode(ctx, text);
@@ -162,7 +169,8 @@ bot.on(['message:new_chat_members', 'chat_member'], async (ctx) => {
             await axios.put(`${urlBack}/update/`, updateData);
 
             console.log(
-                `[Bot New Member] Пользователь присоединился в ${ctx.chat.title
+                `[Bot New Member] Пользователь присоединился в ${
+                    ctx.chat.title
                 }, обновляем данные в базе. ${UserString(ctx.from)}`
             );
         } catch (error) {
