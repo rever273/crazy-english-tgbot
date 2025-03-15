@@ -40,16 +40,15 @@ const Subscription = {
      * Проверяет подписку всех пользователей на все необходимые каналы.
      */
     async checkAllUsersSubscription(bot) {
-        const allUsers = await axios.get(`${urlBack}/users`);
+        const allIds = await axios.get(
+            `${urlBack}/users/allIds/${process.env.SECRET_USER_KEY}`
+        );
         //временно
-        const users = allUsers.map((user) => {
-            return { id: user.tgId };
-        });
-        // [
-        //     { id: 5401716621 },
-        // ];
+        // const users = allUsers.map((user) => {
+        //     return { id: user.tgId };
+        // });
 
-        for (const user of users) {
+        for (const user of allIds) {
             const { subscribed_chat, subscribed_channel } =
                 await this.checkUserSubscription(bot, user.id);
 
