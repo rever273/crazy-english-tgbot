@@ -21,10 +21,9 @@ const urlBack = process.env.URL_BACK;
 const bot = new Bot(BOT_TOKEN); // Укажите токен бота
 
 // Запуск проверки наличия новых уведомлений от пользователя об ошибках каждые 5 минут
-cron.schedule('*/30 * * * *', () => {
-    //TODO добавить фактический запрос к базе данных
-    checkAndSendMistakeReports(bot);
-});
+// cron.schedule('*/30 * * * *', () => {
+//     checkAndSendMistakeReports(bot);
+// });
 
 //Раз в сутки выполняем проверку подписок всех пользователей
 cron.schedule('* 2 * * *', () => {
