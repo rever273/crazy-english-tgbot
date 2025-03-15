@@ -329,6 +329,11 @@ async function userRegistrationOrUpdate(ctx) {
     try {
         // Проверяем, есть ли пользователь в базе
         const response = await axios.get(`${urlBack}/${data.tgId}`);
+
+        if (response?.status === 500) {
+            throw new Error('error');
+        }
+
         const existingUser = response?.data;
 
         if (existingUser?.tgId) {
