@@ -10,4 +10,4 @@ COPY . .
 
 RUN npm install -g nodemon
 
-CMD ["node", "index.jx"]
+CMD ["node", "index.js"]
