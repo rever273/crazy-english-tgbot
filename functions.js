@@ -24,6 +24,7 @@ const Crypto = {
     // }
 
     encryptUserId(userId) {
+        console.log("4548_Buffer.from(useaString())==>", Buffer.from(userId.toString()));
         return Buffer.from(userId.toString())
             .toString('base64')
             .replace(/=/g, '') // Убираем `=`
@@ -33,10 +34,12 @@ const Crypto = {
 
     // Расшифровка: преобразуем Base64 обратно в userId
     decryptUserId(encrypted) {
-        return Buffer.from(
-            encrypted.replace(/-/g, '+').replace(/_/g, '/'), // Восстанавливаем символы
-            'base64'
-        ).toString('utf8');
+        let base64 = encrypted
+            .replace(/-/g, '+')
+            .replace(/_/g, '/')
+            .padEnd(encrypted.length + (4 - encrypted.length % 4) % 4, '=');
+
+        return Buffer.from(base64, 'base64').toString('utf8');
     },
 };
 
@@ -46,9 +49,8 @@ function rnd(a, b = 1) {
 }
 
 function UserString(user) {
-    return `${(user?.first_name + ' ' + (user?.last_name || '')).trim()} | ${
-        user.username || 'No'
-    } | ${user.id} | Premium: ${user.is_premium || 'No'} |`;
+    return `${(user?.first_name + ' ' + (user?.last_name || '')).trim()} | ${user.username || 'No'
+        } | ${user.id} | Premium: ${user.is_premium || 'No'} |`;
 }
 
 module.exports = { Crypto, rnd, UserString };

@@ -1,5 +1,8 @@
 const axios = require('axios');
 const urlBack = process.env.URL_BACK;
+const key = process.env.SECRET_USER_KEY;
+
+if (!key) console.error('No SECRET_USER_KEY in .env file');
 
 const Subscription = {
     ourChannels: [
@@ -40,15 +43,18 @@ const Subscription = {
      * Проверяет подписку всех пользователей на все необходимые каналы.
      */
     async checkAllUsersSubscription(bot) {
-        const allIds = await axios.get(
-            `${urlBack}/users/allIds/${process.env.SECRET_USER_KEY}`
+        const response = await axios.get(
+            `${urlBack}/allIds/${process.env.SECRET_USER_KEY}`
         );
-        //временно
-        // const users = allUsers.map((user) => {
-        //     return { id: user.tgId };
-        // });
+
+        if (response?.status === 500) {
+            throw new Error('error');
+        }
+
+        const allIds = response?.data;
 
         for (const user of allIds) {
+
             const { subscribed_chat, subscribed_channel } =
                 await this.checkUserSubscription(bot, user.id);
 
@@ -63,15 +69,6 @@ const Subscription = {
                     `[Bot Subscription] Пользователь ${user.id} не подписан на канал Crazy Llama Channel`
                 );
             }
-
-            //Убедится, что данные по подписке обновляются в базе, сейчас этого нет.
-            const updateData = {
-                tgId: user.id,
-                subscribed_chat,
-                subscribed_channel,
-            };
-
-            await axios.put(`${process.env.URL_BACK}/update/`, updateData);
         }
     },
 
@@ -108,14 +105,13 @@ const Subscription = {
             }
         }
 
-        const updateData = {
-            tgId: userId, //123
-            subscribed_chat,
-            subscribed_channel,
-        };
-
+        //Обновляем информацию о подписке пользователя
         if (operation !== 'create')
-            await axios.put(`${process.env.URL_BACK}/update/`, updateData);
+            await axios.put(`${process.env.URL_BACK}/update/`, {
+                tgId: userId,
+                subscribed_chat,
+                subscribed_channel,
+            });
 
         return { subscribed_chat, subscribed_channel };
     },

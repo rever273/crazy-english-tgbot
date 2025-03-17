@@ -170,8 +170,7 @@ bot.on(['message:new_chat_members', 'chat_member'], async (ctx) => {
             await axios.put(`${urlBack}/update/`, updateData);
 
             console.log(
-                `[Bot New Member] Пользователь присоединился в ${
-                    ctx.chat.title
+                `[Bot New Member] Пользователь присоединился в ${ctx.chat.title
                 }, обновляем данные в базе. ${UserString(ctx.from)}`
             );
         } catch (error) {
