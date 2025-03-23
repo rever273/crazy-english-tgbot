@@ -24,7 +24,6 @@ const Crypto = {
     // }
 
     encryptUserId(userId) {
-        console.log("4548_Buffer.from(useaString())==>", Buffer.from(userId.toString()));
         return Buffer.from(userId.toString())
             .toString('base64')
             .replace(/=/g, '') // Убираем `=`

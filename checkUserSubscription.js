@@ -1,4 +1,4 @@
-const axios = require('axios');
+const { api } = require('./tokenManager');
 const urlBack = process.env.URL_BACK;
 const key = process.env.SECRET_USER_KEY;
 
@@ -43,8 +43,13 @@ const Subscription = {
      * Проверяет подписку всех пользователей на все необходимые каналы.
      */
     async checkAllUsersSubscription(bot) {
-        const response = await axios.get(
-            `${urlBack}/allIds/${process.env.SECRET_USER_KEY}`
+        if (!process.env.SECRET_USER_KEY) return console.error('No SECRET_USER_KEY in .env file');
+
+        // console.log("5558_api==>", api);
+
+        // return;
+        const response = await api.get(
+            `${urlBack}/users/allIds/${process.env.SECRET_USER_KEY}`
         );
 
         if (response?.status === 500) {
@@ -107,7 +112,7 @@ const Subscription = {
 
         //Обновляем информацию о подписке пользователя
         if (operation !== 'create')
-            await axios.put(`${process.env.URL_BACK}/update/`, {
+            await api.put(`${urlBack}/users/update/`, {
                 tgId: userId,
                 subscribed_chat,
                 subscribed_channel,

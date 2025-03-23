@@ -1,3 +1,4 @@
+const { api } = require('./tokenManager');
 
 // Функция проверяет наличие сообщений о новых ошибок и отправляет сообщение в Telegram.
 async function checkAndSendMistakeReports(bot) {
