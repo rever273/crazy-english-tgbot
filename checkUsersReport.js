@@ -1,77 +1,54 @@
 const { api } = require('./tokenManager');
+const config = require('./config');
+const urlBack = process.env.URL_BACK;
 
 // Функция проверяет наличие сообщений о новых ошибок и отправляет сообщение в Telegram.
 async function checkAndSendMistakeReports(bot) {
 
     if (process.env.NODE_ENV == 'development') {
-        // console.log('Режим разработки: сообщения в Telegram не отправляются.');
-        return;
+        console.log('Режим разработки: сообщения в Telegram не отправляются.');
+        // return;
     }
 
-    console.log('Проверяем наличие новых ошибок...');
+    // console.log('[MistakeReport] Проверяем наличие новых отчетов об ошибках...');
 
     try {
         const reports = await fetchMistakeReports();
 
         if (reports && reports.length > 0) {
+            console.log(`[MistakeReport] Найдено ${reports.length} новых уведомлений об ошибках.`);
             for (const report of reports) {
-                const messageText = formatReportMessage(report);
+                const messageText = formatReportMessage(report).slice(0, 990);
                 try {
                     // Отправляем изображение с подписью. Если изображение не требуется, можно отправить только текст.
                     const res = await bot.api.sendPhoto(
                         process.env.CHAT_ID_REPORT,
-                        report.imageUrl,
+                        `${config.website}/images/dictionary/${report.imageUrl}.jpg`,
                         { caption: messageText, parse_mode: 'HTML' }
                     );
 
                     if (res && res.message_id) {
-                        console.log(`Отправлено сообщение об ошибке для слова "${report.word}"`);
-                        //TODO добавляем UPDATE SQL запрос, чтобы пометить запись как отправленную (sentToTg = true)
+                        console.log(`[MistakeReport] Отправлено в ТГ сообщение #${report.id} об ошибке для слова "${report.wordText}"`);
+                        await api.put(`${urlBack}/words/report/${report.id}`, { sentToTg: true });
                     }
                 } catch (err) {
-                    console.error('Ошибка при отправке сообщения в Telegram:', err);
+                    console.error('[MistakeReport] Ошибка при отправке сообщения в Telegram:', err);
                 }
             }
         } else {
-            console.log('Новых уведомлений об ошибках не найдено.');
+            console.log('[MistakeReport] Новых уведомлений об ошибках не найдено.');
         }
     } catch (err) {
-        console.error('Ошибка при получении данных об ошибках:', err);
+        console.error('[MistakeReport] Ошибка при получении данных об ошибках:', err);
     }
 }
 
 /**
-   * Временная функция для имитации получения новых записей из базы данных.
-   * Пока нет фактического API, возвращаем статический объект.
-   * @returns {Promise<Array<Object>>} – массив с объектами ошибок
+   * @returns {Promise<Array<Object>>} –
    */
 async function fetchMistakeReports() {
-    //TODO добавить логику запроса к базе и вернуть массив новых уведолений.
-    //Делаем SQL запрос, где ищем все записи с sentToTg = false (потом поменяем на true)
-
-    //Пример (временный) полученных данных (сейчас только одно значение, может быть больше)
-    const sampleReport = {
-        userId: "123",
-        username: "developer",
-        id: 97,
-        word_id: 10,
-        word: "from",
-        level: 1,
-        imageUrl: "https://crazyllama.app/images/dictionary/from.jpg",
-        translation_0: "ты",
-        transcription_1: "[juː]",
-        pronunciation_rus: "«ию»",
-        description: "Используется для обращения к одному или нескольким людям, выражения вежливости, указания на адресата.",
-        example_en: "Can you help me with this task?",
-        example_ru: "Ты мой лучший друг.",
-        selectedOptions: ["transcription", "example"],
-        comment: "ffff",
-        sentToTg: false,
-        timestamp: "2025-02-07T14:10:21.356Z"
-    };
-
-    // Временно возвращаем массив с одним примером.
-    return [sampleReport];
+    const response = await api.get(`${urlBack}/words/report`);
+    return response.data;
 }
 
 /**
@@ -80,22 +57,26 @@ async function fetchMistakeReports() {
  * @returns {string} – отформатированное сообщение в формате Markdown
  */
 function formatReportMessage(report) {
+
+    const translation = report?.word?.translation.find((item) => item.id === report.translationIndex);
+    // console.log("2149_report==>", report);
+
     return (
-        `🚨 <b>Новое уведомление об ошибке в слове!</b>\n\n` +
+        `🚨 <b>Новое уведомление об ошибке в слове #${report.id}!</b>\n\n` +
         `👤 Пользователь: <b>@${report.username} (ID: ${report.userId})</b>\n\n` +
 
-        `🔤 Слово: <b>${report.word}</b> (word_id: ${report.word_id}, level: ${report.level})\n` +
-        `▫️ translation: <b>${report.translation_0}</b>\n` +
-        `▫️ transcription: <b>${report.transcription_1}</b>\n` +
-        `▫️ pronunciation: <b>${report.pronunciation_rus}</b>\n` +
-        `▫️ description: <b>${report.description}</b>\n` +
-        `▫️ example_en: <b>${report.example_en}</b>\n` +
-        `▫️ example_ru: <b>${report.example_ru}</b>\n\n` +
+        `🔤 Слово: <b>${report.wordText}</b> <i>(word_id: ${report.wordId}, level: ${report?.word?.level})</i>\n` +
+        `▫️ translation: <b>${translation.translation}</b> <i>(#${report.translationIndex})</i>\n` +
+        `▫️ transcription: <b>${report?.word?.transcription_1}</b>\n` +
+        `▫️ pronunciation: <b>${report?.word?.pronunciation_rus}</b>\n` +
+        `▫️ description: <b>${report?.word?.description.slice(0, 400)}</b>\n` +
+        `▫️ example_en: <b>${report?.word?.example[report.exampleIndex].example_en}</b> <i>(#${report.exampleIndex})</i>\n` +
+        `▫️ example_ru: <b>${report?.word?.example[report.exampleIndex].example_ru}</b>\n\n` +
 
         `✅ Где ошибка:\n<b>` +
-        report.selectedOptions.join('\n') + '</b>\n\n' +
-        `💬 Комментарий: <b>${report.comment}</b>\n\n` +
-        `⏰ <i>Время: ${new Date(report.timestamp).toLocaleString()}</i>`
+        report.selectedOptions.map(opt => `• ${opt}`).join('\n') + '</b>\n\n' +
+        (report?.comment ? `💬 Комментарий: <b>${report?.comment}</b>\n\n` : '') +
+        `⏰ <i>Время: ${new Date(report.date).toLocaleString()}</i>`
     );
 }
 

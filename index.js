@@ -6,7 +6,7 @@ const { I18n } = require('@grammyjs/i18n');
 const { api, refreshToken } = require('./tokenManager');
 const config = require('./config');
 const cron = require('node-cron');
-const trimDisplayName = require('./clearName');
+// const trimDisplayName = require('./clearName');
 
 const { Crypto, UserString } = require('./functions');
 const Subscription = require('./checkUserSubscription');
@@ -30,9 +30,10 @@ async function init() {
     const bot = new Bot(BOT_TOKEN); // Укажите токен бота
 
     // Запуск проверки наличия новых уведомлений от пользователя об ошибках каждые 30 минут
-    // cron.schedule('*/30 * * * *', () => {
-    //     checkAndSendMistakeReports(bot);
-    // });
+    cron.schedule('*/30 * * * *', () => {
+        console.log(new Date(), '[MistakeReport] Проверка наличия новых отчетов об ошибках...');
+        checkAndSendMistakeReports(bot);
+    });
 
     //Раз в сутки выполняем проверку подписок всех пользователей
     cron.schedule('0 2 * * *', () => {
@@ -92,17 +93,13 @@ async function init() {
             if (subscribed_chat) {
                 ctx.reply('✅ Вы подписаны на чат Crazy Llama Chat');
             } else {
-                ctx.reply(
-                    '❌ Вы не подписаны на чат Crazy Llama Chat @CrazyLlamaFarmRU_chat'
-                );
+                ctx.reply('❌ Вы не подписаны на чат Crazy Llama Chat @CrazyLlamaFarmRU_chat');
             }
 
             if (subscribed_channel) {
                 ctx.reply('✅ Вы подписаны на канал Crazy Llama Channel');
             } else {
-                ctx.reply(
-                    '❌ Вы не подписаны на канал Crazy Llama Channel @CrazyLlamaFarmRU'
-                );
+                ctx.reply('❌ Вы не подписаны на канал Crazy Llama Channel @CrazyLlamaFarmRU');
             }
 
             //Пока просто интервальная проверка результатов из базы
@@ -144,10 +141,26 @@ ${ctx.t('invite_link', { link: referralLink })}`;
         // console.timeEnd("replyWithPhoto");
 
         //Закрепляем сообщение у пользователя
-        const chat = await ctx.api.getChat(ctx.chat.id);
-        if (!chat.pinned_message?.message_id) {
-            await ctx.api.pinChatMessage(ctx.chat.id, sentMessage.message_id);
+        try {
+            const chat = await ctx.api.getChat(ctx.chat.id);
+            const pinned = chat.pinned_message;
+
+            // Проверка: если есть закреплённое сообщение
+            if (pinned) {
+                // Если оно не от бота — переподключаем
+                const isFromBot = pinned.from?.is_bot;
+                if (!isFromBot) {
+                    await ctx.api.pinChatMessage(ctx.chat.id, sentMessage.message_id);
+                }
+            } else {
+                console.log("2327_chat==>", chat);
+                // Если ничего не закреплено — закрепляем
+                await ctx.api.pinChatMessage(ctx.chat.id, sentMessage.message_id);
+            }
+        } catch (error) {
+            console.error('Ошибка при закреплении сообщения:', error);
         }
+
     });
 
     // Обработчик добавления новых участников в чат и добавление данных о них в базу
@@ -246,9 +259,9 @@ ${ctx.t('invite_link', { link: referralLink })}`;
 
         // Формируем URL на preview-страницу
         // const previewUrl = `http://localhost:3000/api/users/preview/${displayName}/${encryptedId}`;
-        const previewUrl = `${process.env.WEBSITE}/api/users/preview/${displayName}/${encryptedId}?v=${Date.now()}`;
+        const previewUrl = `${process.env.WEBSITE}/api/auth/preview/${displayName}/${encryptedId}?v=${Date.now()}`;
 
-        console.log("1902_previewwUrl==>", previewUrl);
+        console.log("1902_previewwU rl==>", previewUrl);
 
         // Создаем результат для инлайн-меню
         const results = [
@@ -259,7 +272,7 @@ ${ctx.t('invite_link', { link: referralLink })}`;
                 description: ctx.t('inline.description'),
                 thumb_url: `${thumbUrl}?v=${Date.now()}`, // Превью картинки 
                 input_message_content: {
-                    message_text: `Присоединяйтесь и изучайте английский язык вместе с нами! <a href="${previewUrl}">🦙🦙🦙</a>`,
+                    message_text: `<a href="${previewUrl}">🦙🦙🦙</a>\nПрисоединяйтесь и изучайте английский язык вместе с нами!`,
                     parse_mode: 'HTML',
                     disable_web_page_preview: false, // Включаем превью ссылки
                 },
@@ -287,7 +300,7 @@ ${ctx.t('invite_link', { link: referralLink })}`;
                 const referral_id = Crypto.decryptUserId(referralCode); // Расшифровываем ID
 
                 //Пользователь совпадает или не имеет реферала
-                if (!referral_id || referral_id === '' || user_id === referral_id) {
+                if (!referral_id || referral_id === '' || Number(user_id) == Number(referral_id)) {
                     return;
                 }
 
@@ -302,11 +315,7 @@ ${ctx.t('invite_link', { link: referralLink })}`;
                     console.error('Ошибка при добавлении реферала:', error.message);
                 }
 
-                console.log(
-                    `[Bot Referral] Пользователь ${UserString(
-                        ctx.from
-                    )} был приглашен пользователем с ID ${referral_id}`
-                );
+                console.log(`[Bot Referral] Пользователь ${UserString(ctx.from)} был приглашен пользователем с ID ${referral_id}`);
             }
         }
     }
@@ -371,7 +380,7 @@ ${ctx.t('invite_link', { link: referralLink })}`;
             if (error.response) {
                 // Сервер ответил, но статус ошибки (например, 404)
                 if (error.response.status === 404) {
-                    console.log('Пользователь не найден');
+                    console.log('Пользователь не найден', data.tgId);
                 } else if (error.response.status != 500) {
                     console.log(`Ошибка сервера: ${error.response.status}`);
                 }

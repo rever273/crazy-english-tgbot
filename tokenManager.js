@@ -25,7 +25,7 @@ async function refreshToken() {
 
         // Обновляем заголовок для всех запросов через наш экземпляр api
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        console.log(new Date().toLocaleString(), 'Token updated:', token);
+        console.log(new Date(), 'Token updated:', token.slice(0, 10) + '...');
 
         return token;
     } catch (error) {
