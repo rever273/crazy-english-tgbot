@@ -43,8 +43,35 @@ const Crypto = {
     },
 };
 
-function rnd(a, b = 1) {
-    if (a > b) return Math.floor(Math.random() * (a - b + 1)) + b;
+/**
+ * Генерирует случайное число в заданном диапазоне
+ * @param {number} a - Минимальное значение или длина (если b не указано)
+ * @param {number} [b=1] - Максимальное значение
+ * @param {boolean} [isIndex=false] - Если true, результат приводится к индексу (вычитает 1)
+ * @returns {number} Случайное число в диапазоне [a, b] или [0, a-1] если isIndex=true
+ */
+function rnd(a, b = 1, isIndex = false) {
+    // Проверка на корректность входных данных
+    if (typeof a !== 'number' || typeof b !== 'number') {
+        throw new Error('Параметры должны быть числами');
+    }
+
+    if (a < 0 || b < 0) {
+        throw new Error('Параметры не могут быть отрицательными');
+    }
+
+    // Обработка режима isIndex
+    if (isIndex) {
+        if (a === 0) return 0; // Для пустых массивов
+        const max = Math.max(a, b);
+        const randomValue = Math.floor(Math.random() * max);
+        return randomValue;
+    }
+
+    // Стандартная логика
+    if (a > b) {
+        return Math.floor(Math.random() * (a - b + 1)) + b;
+    }
     return Math.floor(Math.random() * (b - a + 1)) + a;
 }
 
