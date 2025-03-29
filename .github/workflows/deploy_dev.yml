@@ -21,4 +21,4 @@ jobs:
             git switch dev
             git pull
             cd ../
-            docker-compose up -d --build test-bot
+            docker-compose -f docker-compose.dev.yml up -d --build test-bot
