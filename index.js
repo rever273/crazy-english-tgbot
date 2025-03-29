@@ -24,6 +24,8 @@ const lifecycle = process.env.npm_lifecycle_event; // например: "start",
 global.isDev = mode === 'development';
 global.isLocal = lifecycle === 'start:dev';
 
+console.log("0509_isLocal==>", isLocal);
+
 global.BACKEND_URL = isLocal
     ? process.env.BACKEND_URL_LOCAL
     : process.env.BACKEND_URL;
@@ -165,7 +167,6 @@ ${ctx.t('invite_link', { link: referralLink })}`;
                     await ctx.api.pinChatMessage(ctx.chat.id, sentMessage.message_id);
                 }
             } else {
-                console.log("2327_chat==>", chat);
                 // Если ничего не закреплено — закрепляем
                 await ctx.api.pinChatMessage(ctx.chat.id, sentMessage.message_id);
             }
@@ -200,6 +201,8 @@ ${ctx.t('invite_link', { link: referralLink })}`;
                 if (channelData.type === 'chat') updateData.subscribed_chat = true;
                 if (channelData.type === 'channel')
                     updateData.subscribed_channel = true;
+
+                console.log("0325_global.BACKEND_URL==>", global.BACKEND_URL);
 
                 await api.put(`${global.BACKEND_URL}/users/update/`, updateData);
 

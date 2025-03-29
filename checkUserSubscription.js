@@ -44,9 +44,6 @@ const Subscription = {
     async checkAllUsersSubscription(bot) {
         if (!secretKey) return console.error('No SECRET_USER_KEY in .env file');
 
-        // console.log("5558_api==>", api);
-
-        // return;
         const response = await api.get(
             `${global.BACKEND_URL}/users/allIds/${secretKey}`
         );

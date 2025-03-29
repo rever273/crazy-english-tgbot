@@ -56,9 +56,7 @@ async function fetchMistakeReports() {
  * @returns {string} – отформатированное сообщение в формате Markdown
  */
 function formatReportMessage(report) {
-
     const translation = report?.word?.translation.find((item) => item.id === report.translationIndex);
-    // console.log("2149_report==>", report);
 
     return (
         `🚨 <b>Новое уведомление об ошибке в слове #${report.id}!</b>\n\n` +
