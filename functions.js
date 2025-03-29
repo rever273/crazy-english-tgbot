@@ -4,7 +4,6 @@ const crypto = require('crypto'); // Для шифрования ID
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY.padEnd(16, '0').slice(0, 16); // Приводим к 32 символам // 32 байта для AES-256
 const IV_LENGTH = 16; // Длина инициализационного вектора
 
-console.log("3134_process.env.ENCRYPTION_KEY==>", process.env.ENCRYPTION_KEY);
 // Функция для шифрования ID пользователя
 const Crypto = {
     // encryptUserId(userId) {

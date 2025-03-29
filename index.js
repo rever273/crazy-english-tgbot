@@ -16,9 +16,19 @@ const User = require('./user');
 // const fs = require('fs');
 
 process.env.NODE_NO_WARNINGS = '1';
-const mode = process.env.NODE_ENV || 'unknown';
 const BOT_TOKEN = process.env.BOT_TOKEN;
-const urlBack = process.env.URL_BACK;
+
+const mode = process.env.MODE || 'unknown';
+const lifecycle = process.env.npm_lifecycle_event; // например: "start", "start:dev"
+
+global.isDev = mode === 'development';
+global.isLocal = lifecycle === 'start:dev';
+
+global.BACKEND_URL = isLocal
+    ? process.env.BACKEND_URL_LOCAL
+    : process.env.BACKEND_URL;
+
+console.log(new Date().toLocaleString(), `[Начало работы] MODE: ${mode}. Локальная машина:`, isLocal ? '✅ Да' : '❌ Нет');
 
 async function init() {
     // Сразу получаем токен при старте приложения
@@ -37,7 +47,9 @@ async function init() {
 
     //Раз в сутки выполняем проверку подписок всех пользователей
     cron.schedule('0 2 * * *', () => {
-        if (mode === 'development') console.log('Проверка подписок в тестовой версии!');
+        if (isDev || isLocal) {
+            console.log('Проверка подписок в тестовой версии!');
+        }
         console.log(new Date(), 'Проверка подписок всех пользователей');
         Subscription.checkAllUsersSubscription(bot);
     });
@@ -189,7 +201,7 @@ ${ctx.t('invite_link', { link: referralLink })}`;
                 if (channelData.type === 'channel')
                     updateData.subscribed_channel = true;
 
-                await api.put(`${urlBack}/users/update/`, updateData);
+                await api.put(`${global.BACKEND_URL}/users/update/`, updateData);
 
                 console.log(
                     `[Bot New Member] Пользователь присоединился в ${ctx.chat.title
@@ -261,8 +273,7 @@ ${ctx.t('invite_link', { link: referralLink })}`;
         // const previewUrl = `http://localhost:3000/api/users/preview/${displayName}/${encryptedId}`;
         const previewUrl = `${process.env.WEBSITE}/api/auth/preview/${displayName}/${encryptedId}?v=${Date.now()}`;
 
-        console.log("1902_previewwU rl==>", previewUrl);
-
+        // \nПрисоединяйтесь и изучайте английский язык вместе с нами!
         // Создаем результат для инлайн-меню
         const results = [
             {
@@ -270,9 +281,9 @@ ${ctx.t('invite_link', { link: referralLink })}`;
                 id: encryptedId, // Уникальный идентификатор результата
                 title: ctx.t('inline.title'),
                 description: ctx.t('inline.description'),
-                thumb_url: `${thumbUrl}?v=${Date.now()}`, // Превью картинки 
+                thumb_url: `${thumbUrl}`, // Превью картинки  ?v=${Date.now()}
                 input_message_content: {
-                    message_text: `<a href="${previewUrl}">🦙🦙🦙</a>\nПрисоединяйтесь и изучайте английский язык вместе с нами!`,
+                    message_text: `<a href="${previewUrl}">🦙🦙🦙</a>`,
                     parse_mode: 'HTML',
                     disable_web_page_preview: false, // Включаем превью ссылки
                 },
@@ -310,7 +321,7 @@ ${ctx.t('invite_link', { link: referralLink })}`;
                 };
 
                 try {
-                    await api.post(`${urlBack}/users/ref`, data);
+                    await api.post(`${global.BACKEND_URL}/users/ref`, data);
                 } catch (error) {
                     console.error('Ошибка при добавлении реферала:', error.message);
                 }
@@ -330,20 +341,20 @@ ${ctx.t('invite_link', { link: referralLink })}`;
             );
 
         const data = {
-            tgId: ctx.from.id, //BIGINT
+            tgId: Number(ctx.from.id), //BIGINT
             userName: ctx.from?.username || '', //String
             firstName: ctx.from.first_name, //String
             lastName: ctx.from?.last_name || '', //String
             languageCode: ctx?.from?.language_code || 'en', //String
             isPremium: ctx?.from?.is_premium || false, //Boolean
-            added_to_attachment_menu: ctx?.from?.added_to_attachment_menu || false, //Boolean
+            addedToAttachmentMenu: ctx?.from?.added_to_attachment_menu || false, //Boolean
             subscribed_chat, //Boolean по умолчанию false
             subscribed_channel, //Boolean по умолчанию false
         };
 
         async function createNewUser(data) {
             try {
-                await api.post(`${urlBack}/users`, data);
+                await api.post(`${global.BACKEND_URL}/users`, data);
                 console.log(
                     `[Bot Start] Новый участник зарегистрирован: ${UserString(ctx.from)}`
                 );
@@ -355,18 +366,23 @@ ${ctx.t('invite_link', { link: referralLink })}`;
 
         try {
             // Проверяем, есть ли пользователь в базе
-            const response = await api.get(`${urlBack}/users/${data.tgId}`);
+            const response = await api.get(`${global.BACKEND_URL}/users/${data.tgId}`);
             const existingUser = response?.data;
 
             if (existingUser?.tgId) {
                 // Если пользователь есть, проверяем, изменились ли данные
-                const hasChanges = Object.keys(data).some(
-                    (key) => data[key] !== existingUser[key]
-                );
+                const hasChanges = Object.entries(data).some(([key, value]) => {
+                    const dbValue = existingUser[key];
+                    const isDifferent = String(value) !== String(dbValue);
+                    // if (isDifferent) {
+                    //     console.log(`Изменение в поле "${key}": база="${existingUser[key]}", новые="${value}"`);
+                    // }
+                    return isDifferent;
+                });
 
                 if (hasChanges) {
                     // Обновляем пользователя, если данные изменились
-                    await api.put(`${urlBack}/users/update/`, data);
+                    await api.put(`${global.BACKEND_URL}/users/update/`, data);
                     console.log(
                         `[Bot Start] Пользователь обновлен: ${UserString(ctx.from)}`
                     );
@@ -381,13 +397,14 @@ ${ctx.t('invite_link', { link: referralLink })}`;
                 // Сервер ответил, но статус ошибки (например, 404)
                 if (error.response.status === 404) {
                     console.log('Пользователь не найден', data.tgId);
-                } else if (error.response.status != 500) {
-                    console.log(`Ошибка сервера: ${error.response.status}`);
                 }
+                // else if (error.response.status != 500) {
+                //     console.log(`Ошибка сервера: ${error.response.status, error?.message}`);
+                // }
                 return createNewUser(data)
             } else if (error.request) {
                 // Запрос был отправлен, но ответа нет (проблема с сетью)
-                console.log('Ошибка сети: сервер не отвечает');
+                console.log('Ошибка сети: сервер не отвечает', error?.message);
             } else {
                 // Другая ошибка (например, ошибка в коде запроса)
                 console.log('Ошибка при запросе:', error.message);

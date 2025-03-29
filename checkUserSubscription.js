@@ -1,8 +1,7 @@
 const { api } = require('./tokenManager');
-const urlBack = process.env.URL_BACK;
-const key = process.env.SECRET_USER_KEY;
+const secretKey = process.env.SECRET_USER_KEY;
 
-if (!key) console.error('No SECRET_USER_KEY in .env file');
+if (!secretKey) console.error('No SECRET_USER_KEY in .env file');
 
 const Subscription = {
     ourChannels: [
@@ -43,13 +42,13 @@ const Subscription = {
      * Проверяет подписку всех пользователей на все необходимые каналы.
      */
     async checkAllUsersSubscription(bot) {
-        if (!process.env.SECRET_USER_KEY) return console.error('No SECRET_USER_KEY in .env file');
+        if (!secretKey) return console.error('No SECRET_USER_KEY in .env file');
 
         // console.log("5558_api==>", api);
 
         // return;
         const response = await api.get(
-            `${urlBack}/users/allIds/${process.env.SECRET_USER_KEY}`
+            `${global.BACKEND_URL}/users/allIds/${secretKey}`
         );
 
         if (response?.status === 500) {
@@ -112,7 +111,7 @@ const Subscription = {
 
         //Обновляем информацию о подписке пользователя
         if (operation !== 'create')
-            await api.put(`${urlBack}/users/update/`, {
+            await api.put(`${global.BACKEND_URL}/users/update/`, {
                 tgId: userId,
                 subscribed_chat,
                 subscribed_channel,

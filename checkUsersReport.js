@@ -1,12 +1,11 @@
 const { api } = require('./tokenManager');
 const config = require('./config');
-const urlBack = process.env.URL_BACK;
 
 // Функция проверяет наличие сообщений о новых ошибок и отправляет сообщение в Telegram.
 async function checkAndSendMistakeReports(bot) {
 
-    if (process.env.NODE_ENV == 'development') {
-        console.log('Режим разработки: сообщения в Telegram не отправляются.');
+    if (global.isLocal) {
+        console.log('[Предупреждение] Режим разработки: сообщения в Telegram не отправляются.');
         // return;
     }
 
@@ -29,7 +28,7 @@ async function checkAndSendMistakeReports(bot) {
 
                     if (res && res.message_id) {
                         console.log(`[MistakeReport] Отправлено в ТГ сообщение #${report.id} об ошибке для слова "${report.wordText}"`);
-                        await api.put(`${urlBack}/words/report/${report.id}`, { sentToTg: true });
+                        await api.put(`${global.BACKEND_URL}/words/report/${report.id}`, { sentToTg: true });
                     }
                 } catch (err) {
                     console.error('[MistakeReport] Ошибка при отправке сообщения в Telegram:', err);
@@ -47,7 +46,7 @@ async function checkAndSendMistakeReports(bot) {
    * @returns {Promise<Array<Object>>} –
    */
 async function fetchMistakeReports() {
-    const response = await api.get(`${urlBack}/words/report`);
+    const response = await api.get(`${global.BACKEND_URL}/words/report`);
     return response.data;
 }
 
