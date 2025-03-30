@@ -30,6 +30,8 @@ global.BACKEND_URL = isLocal
     ? process.env.BACKEND_URL_LOCAL
     : process.env.BACKEND_URL;
 
+console.log("4128_global.BACKEND_URL==>", global.BACKEND_URL);
+
 console.log(new Date().toLocaleString(), `[Начало работы] MODE: ${mode}. Локальная машина:`, isLocal ? '✅ Да' : '❌ Нет');
 
 async function init() {
@@ -215,6 +217,7 @@ ${ctx.t('invite_link', { link: referralLink })}`;
                     '[Bot New Member] Error updating subscription status:',
                     error.response?.data || error.message
                 );
+                console.log('userdata2', user)
             }
         }
     });
@@ -401,9 +404,14 @@ ${ctx.t('invite_link', { link: referralLink })}`;
                 if (error.response.status === 404) {
                     console.log('Пользователь не найден', data.tgId);
                 }
+                if (error.response.status === 500) {
+                    console.log('Ошибка сервера:', error.response.status, error?.message);
+                }
                 // else if (error.response.status != 500) {
                 //     console.log(`Ошибка сервера: ${error.response.status, error?.message}`);
                 // }
+
+                //создаем нового пользователя
                 return createNewUser(data)
             } else if (error.request) {
                 // Запрос был отправлен, но ответа нет (проблема с сетью)
