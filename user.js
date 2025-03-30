@@ -24,7 +24,7 @@ class User {
     }
 
     /**
-     * @return {string} ссылка на пользователя по username
+     * @return {string} ссылка на пользователя по username - не тегает пользователя
      */
     link() {
         if (this.username != '') return get_href(`https://t.me/${this.username}`, this.name());
