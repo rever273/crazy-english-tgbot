@@ -6,7 +6,7 @@ on:
       - dev
 
 jobs:
-  PROD:
+  DEV:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to server
