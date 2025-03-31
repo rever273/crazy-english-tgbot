@@ -23,4 +23,5 @@ jobs:
             git clean -fd
             git pull origin main
             cd ../
-            docker-compose up -d --build bot
+            docker-compose build --no-cache bot
+            docker-compose up -d bot
