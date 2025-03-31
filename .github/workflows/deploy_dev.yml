@@ -13,9 +13,9 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: crazyllama.app
-          username: developer
+          username: deploy
           port: 22
-          password: dev3H19J21
+          password: ${{ secrets.SERVERDEPLOY }}
           script: |
             cd /opt/crazy-english-general-dev/crazy-english-tgbot
             git switch dev
