@@ -38,7 +38,7 @@ async function init() {
     // Сразу получаем токен при старте приложения
     await refreshToken();
 
-    // Автоматически обновляем токен каждые 58 минут
+    // Автоматически обновляем токен каждые 58  минут
     setInterval(refreshToken, 58 * 60 * 1000);
 
     const bot = new Bot(BOT_TOKEN); // Укажите токен бота
