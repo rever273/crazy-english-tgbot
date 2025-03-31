@@ -19,6 +19,8 @@ jobs:
           script: |
             cd /opt/crazy-english-general-prod/crazy-english-tgbot
             git switch main
-            git pull
+            git reset --hard
+            git clean -fd
+            git pull origin main
             cd ../
             docker-compose up -d --build bot
