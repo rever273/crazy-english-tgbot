@@ -1,24 +1,31 @@
 name: Deploy PROD
 
 on:
-  push:
-    branches:
-      - main
+    push:
+        branches:
+            - main
 
 jobs:
-  PROD:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to server
-        uses: appleboy/ssh-action@master
-        with:
-          host: crazyllama.app
-          username: deploy
-          port: 22
-          password: ${{ secrets.SERVERDEPLOY }}
-          script: |
-            cd /opt/crazy-english-general-prod/crazy-english-tgbot
-            git switch main
-            git pull
-            cd ../
-            docker-compose up -d --build bot
+    PROD:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Deploy to server
+              uses: appleboy/ssh-action@master
+              with:
+                  host: crazyllama.app
+                  username: deploy
+                  port: 22
+                  password: ${{ secrets.SERVERDEPLOY }}
+                  script: |
+                      cd /opt/crazy-english-general-prod/crazy-english-tgbot
+
+                      git fetch --all
+                      git switch main
+
+                      git reset --hard origin/main
+                      git clean -fd
+
+                      #git pull
+
+                      cd ../
+                      docker-compose up -d --build bot
