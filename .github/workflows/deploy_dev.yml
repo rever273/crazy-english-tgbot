@@ -21,6 +21,6 @@ jobs:
             git switch dev
             git reset --hard
             git clean -fd
-            git pull origin main
+            git pull origin dev
             cd ../
             docker-compose -f docker-compose.dev.yml up -d --build test-bot
