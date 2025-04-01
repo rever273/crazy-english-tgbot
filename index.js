@@ -262,62 +262,113 @@ ${ctx.t('invite_link', { link: referralLink })}`;
     });
 
     // Обработка инлайн-запроса
-    bot.inlineQuery(async (ctx) => {
+    bot.inlineQuery((ctx) => {
+        const query = ctx.inlineQuery.query;
+        return query === '' || /^invite_/.test(query);
+    }, async (ctx) => {
 
+        const userLanguage = ctx.from.language_code || 'en';
+        ctx.i18n.useLocale(userLanguage);
         const query = ctx.inlineQuery.query;
 
-        // Если запрос пустой — не отвечаем
-        if (!query || query.trim() === '') {
-            return;
+        if (query === '') {
+            // Показываем дефолтный результат при пустом запросе 
+            const thumbUrl = `${process.env.WEBSITE}/images/tg_bot/inline_llama_logo_thumb.webp`;
+            const results = [
+                {
+                    type: 'article',
+                    id: 'default_bot_entry',
+                    title: ctx.t('inline.default_title'),
+                    description: ctx.t('inline.default_description'),
+                    thumb_url: thumbUrl,
+                    input_message_content: {
+                        message_text: ctx.t('inline.default_message'),
+                        parse_mode: 'HTML',
+                    },
+                    reply_markup: new InlineKeyboard().url(
+                        ctx.t('btn.open_bot'),
+                        process.env.BOT_URL
+                    ),
+                }
+            ];
+            return await ctx.answerInlineQuery(results);
         }
 
-        // Если не совпадает с нужным шаблоном — тоже игнорим
+        // Обработка инвайт-ссылки
         const match = query.match(/^invite_(.+)$/);
-        if (!match) {
-            return;
-        }
+        if (!match) return;
 
-        const encryptedId = match[1]; // Получаем зашифрованный ID из инлайн-запроса
-        const userLanguage = ctx.from.language_code || 'en'; // Получаем язык пользователя
-        ctx.i18n.useLocale(userLanguage);
-
+        const encryptedId = match[1];
         const user = new User(ctx.from);
-        const thumbUrl = `${process.env.WEBSITE}/images/tg_bot/inline_llama_thumb.jpg`;
-
-
+        const thumbUrl = `${process.env.WEBSITE}/images/tg_bot/inline_llama_thumb.webp`;
         const displayName = user.username
             ? `@${user.username}`
-            : user.first_name || 'Пользователь';
+            : user.first_name || ctx.t('default_user');
 
-        // Формируем URL на preview-страницу
-        // const previewUrl = `http://localhost:3000/api/users/preview/${displayName}/${encryptedId}`;
         const previewUrl = `${process.env.WEBSITE}/api/auth/preview/${displayName}/${encryptedId}?v=${Date.now()}`;
 
-        // \nПрисоединяйтесь и изучайте английский язык вместе с нами!
-        // Создаем результат для инлайн-меню
         const results = [
             {
                 type: 'article',
-                id: encryptedId, // Уникальный идентификатор результата
+                id: encryptedId,
                 title: ctx.t('inline.title'),
                 description: ctx.t('inline.description'),
-                thumb_url: `${thumbUrl}`, // Превью картинки  ?v=${Date.now()}
+                thumb_url: thumbUrl,
                 input_message_content: {
                     message_text: `<a href="${previewUrl}">🦙🦙🦙</a>`,
                     parse_mode: 'HTML',
-                    disable_web_page_preview: false, // Включаем превью ссылки
+                    disable_web_page_preview: false,
                 },
                 reply_markup: new InlineKeyboard().url(
                     ctx.t('btn.study'),
-                    `${process.env.BOT_URL}?start=invite_${encryptedId}` // Теперь ведет на страницу с Open Graph превью
+                    `${process.env.BOT_URL}?start=invite_${encryptedId}`
                 ),
             },
         ];
 
-        await ctx.answerInlineQuery(results, {
-            cache_time: 0, // 0 означает "не кэшировать"
-        });
+        await ctx.answerInlineQuery(results, { cache_time: 0 });
     });
+    // bot.inlineQuery(/^invite_(.+)$/, async (ctx) => {
+    //     const encryptedId = ctx.match[1]; // Получаем зашифрованный ID из инлайн-запроса
+    //     const userLanguage = ctx.from.language_code || 'en'; // Получаем язык пользователя
+    //     ctx.i18n.useLocale(userLanguage);
+
+    //     const user = new User(ctx.from);
+    //     const thumbUrl = `${process.env.WEBSITE}/images/tg_bot/inline_llama_thumb.jpg`;
+
+
+    //     const displayName = user.username
+    //         ? `@${user.username}`
+    //         : user.first_name || 'Пользователь';
+
+    //     // Формируем URL на preview-страницу
+    //     // const previewUrl = `http://localhost:3000/api/users/preview/${displayName}/${encryptedId}`;
+    //     const previewUrl = `${process.env.WEBSITE}/api/auth/preview/${displayName}/${encryptedId}?v=${Date.now()}`;
+
+    //     // \nПрисоединяйтесь и изучайте английский язык вместе с нами!
+    //     // Создаем результат для инлайн-меню
+    //     const results = [
+    //         {
+    //             type: 'article',
+    //             id: encryptedId, // Уникальный идентификатор результата
+    //             title: ctx.t('inline.title'),
+    //             description: ctx.t('inline.description'),
+    //             thumb_url: `${thumbUrl}`, // Превью картинки  ?v=${Date.now()}
+    //             input_message_content: {
+    //                 message_text: `<a href="${previewUrl}">🦙🦙🦙</a>`,
+    //                 parse_mode: 'HTML',
+    //                 disable_web_page_preview: false, // Включаем превью ссылки
+    //             },
+    //             reply_markup: new InlineKeyboard().url(
+    //                 ctx.t('btn.study'),
+    //                 `${process.env.BOT_URL}?start=invite_${encryptedId}` // Теперь ведет на страницу с Open Graph превью
+    //             ),
+    //         },
+    //     ];
+
+    //     await ctx.answerInlineQuery(results);
+    // });
+
 
     // Проверяем, есть ли реферальный код
     async function checkReferralCode(ctx, text) {
