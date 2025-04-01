@@ -262,8 +262,22 @@ ${ctx.t('invite_link', { link: referralLink })}`;
     });
 
     // Обработка инлайн-запроса
-    bot.inlineQuery(/^invite_(.+)$/, async (ctx) => {
-        const encryptedId = ctx.match[1]; // Получаем зашифрованный ID из инлайн-запроса
+    bot.inlineQuery(async (ctx) => {
+
+        const query = ctx.inlineQuery.query;
+
+        // Если запрос пустой — не отвечаем
+        if (!query || query.trim() === '') {
+            return;
+        }
+
+        // Если не совпадает с нужным шаблоном — тоже игнорим
+        const match = query.match(/^invite_(.+)$/);
+        if (!match) {
+            return;
+        }
+
+        const encryptedId = match[1]; // Получаем зашифрованный ID из инлайн-запроса
         const userLanguage = ctx.from.language_code || 'en'; // Получаем язык пользователя
         ctx.i18n.useLocale(userLanguage);
 
@@ -300,7 +314,9 @@ ${ctx.t('invite_link', { link: referralLink })}`;
             },
         ];
 
-        await ctx.answerInlineQuery(results);
+        await ctx.answerInlineQuery(results, {
+            cache_time: 0, // 0 означает "не кэшировать"
+        });
     });
 
     // Проверяем, есть ли реферальный код
