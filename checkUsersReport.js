@@ -22,7 +22,7 @@ async function checkAndSendMistakeReports(bot) {
                     // Отправляем изображение с подписью. Если изображение не требуется, можно отправить только текст.
                     const res = await bot.api.sendPhoto(
                         process.env.CHAT_ID_REPORT,
-                        `${config.website}/images/dictionary/${report.imageUrl}.jpg`,
+                        `${config.website}/images/dictionary/${report.imageUrl}.webp`,
                         { caption: messageText, parse_mode: 'HTML' }
                     );
 
@@ -69,6 +69,7 @@ function formatReportMessage(report) {
         `▫️ description: <b>${report?.word?.description.slice(0, 400)}</b>\n` +
         `▫️ example_en: <b>${report?.word?.example[report.exampleIndex].example_en}</b> <i>(#${report.exampleIndex})</i>\n` +
         `▫️ example_ru: <b>${report?.word?.example[report.exampleIndex].example_ru}</b>\n\n` +
+        `▫️ Изображение: <b>${report?.imageUrl}</b>\n` +
 
         `✅ Где ошибка:\n<b>` +
         report.selectedOptions.map(opt => `• ${opt}`).join('\n') + '</b>\n\n' +
