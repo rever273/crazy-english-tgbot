@@ -24,13 +24,9 @@ const lifecycle = process.env.npm_lifecycle_event; // например: "start",
 global.isDev = mode === 'development';
 global.isLocal = lifecycle === 'start:dev';
 
-console.log("0509_isLocal==>", isLocal);
-
 global.BACKEND_URL = isLocal
     ? process.env.BACKEND_URL_LOCAL
     : process.env.BACKEND_URL;
-
-console.log("4128_global.BACKEND_URL==>", global.BACKEND_URL);
 
 console.log(new Date().toLocaleString(), `[Начало работы] MODE: ${mode}. Локальная машина:`, isLocal ? '✅ Да' : '❌ Нет');
 
