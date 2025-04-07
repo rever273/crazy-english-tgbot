@@ -324,47 +324,27 @@ ${ctx.t('invite_link', { link: referralLink })}`;
 
         await ctx.answerInlineQuery(results, { cache_time: 0 });
     });
-    // bot.inlineQuery(/^invite_(.+)$/, async (ctx) => {
-    //     const encryptedId = ctx.match[1]; // Получаем зашифрованный ID из инлайн-запроса
-    //     const userLanguage = ctx.from.language_code || 'en'; // Получаем язык пользователя
-    //     ctx.i18n.useLocale(userLanguage);
-
-    //     const user = new User(ctx.from);
-    //     const thumbUrl = `${process.env.WEBSITE}/images/tg_bot/inline_llama_thumb.jpg`;
 
 
-    //     const displayName = user.username
-    //         ? `@${user.username}`
-    //         : user.first_name || 'Пользователь';
+    //Получение данных из WebApp
+    bot.on('callback_query', (ctx) => {
+        console.log("📥 callback_query update:", JSON.stringify(ctx.update, null, 2));
+    });
 
-    //     // Формируем URL на preview-страницу
-    //     // const previewUrl = `http://localhost:3000/api/users/preview/${displayName}/${encryptedId}`;
-    //     const previewUrl = `${process.env.WEBSITE}/api/auth/preview/${displayName}/${encryptedId}?v=${Date.now()}`;
+    bot.on("callback_query:data", (ctx) => {
+        const data = ctx.callbackQuery?.data;
+        console.log("👉 Данные из WebApp:", data);
+    });
 
-    //     // \nПрисоединяйтесь и изучайте английский язык вместе с нами!
-    //     // Создаем результат для инлайн-меню
-    //     const results = [
-    //         {
-    //             type: 'article',
-    //             id: encryptedId, // Уникальный идентификатор результата
-    //             title: ctx.t('inline.title'),
-    //             description: ctx.t('inline.description'),
-    //             thumb_url: `${thumbUrl}`, // Превью картинки  ?v=${Date.now()}
-    //             input_message_content: {
-    //                 message_text: `<a href="${previewUrl}">🦙🦙🦙</a>`,
-    //                 parse_mode: 'HTML',
-    //                 disable_web_page_preview: false, // Включаем превью ссылки
-    //             },
-    //             reply_markup: new InlineKeyboard().url(
-    //                 ctx.t('btn.study'),
-    //                 `${process.env.BOT_URL}?start=invite_${encryptedId}` // Теперь ведет на страницу с Open Graph превью
-    //             ),
-    //         },
-    //     ];
-
-    //     await ctx.answerInlineQuery(results);
+    //Если проверка не пройдет, использовать этот вариант
+    // bot.on('message', (ctx) => {
+    //     console.log("📥 message update:", JSON.stringify(ctx.update, null, 2));
     // });
 
+    // bot.on("message:web_app_data", (ctx) => {
+    //     const raw = ctx.message.web_app_data?.data;
+    //     console.log("👉 Данные из WebApp:", raw);
+    //   });
 
     // Проверяем, есть ли реферальный код
     async function checkReferralCode(ctx, text) {

@@ -27,7 +27,7 @@ async function refreshToken() {
 
         return token;
     } catch (error) {
-        console.error('Error refreshing token:', error.message);
+        console.error('Error refreshing token:', error.response?.data || error.message);
         throw error;
     }
 }
