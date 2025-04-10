@@ -41,7 +41,7 @@ async function init() {
 
     // Запуск проверки наличия новых уведомлений от пользователя об ошибках каждые 30 минут
     cron.schedule('*/30 * * * *', () => {
-        console.log(new Date(), '[MistakeReport] Проверка наличия новых отчетов об ошибках...');
+        console.log('[MistakeReport] Проверка наличия новых отчетов об ошибках...');
         checkAndSendMistakeReports(bot);
     });
 
@@ -337,14 +337,14 @@ ${ctx.t('invite_link', { link: referralLink })}`;
     });
 
     //Если проверка не пройдет, использовать этот вариант
-    // bot.on('message', (ctx) => {
-    //     console.log("📥 message update:", JSON.stringify(ctx.update, null, 2));
-    // });
+    bot.on('message', (ctx) => {
+        console.log("📥 message update:", JSON.stringify(ctx.update, null, 2));
+    });
 
-    // bot.on("message:web_app_data", (ctx) => {
-    //     const raw = ctx.message.web_app_data?.data;
-    //     console.log("👉 Данные из WebApp:", raw);
-    //   });
+    bot.on("message:web_app_data", (ctx) => {
+        const raw = ctx.message.web_app_data?.data;
+        console.log("👉 Данные из WebApp:", raw);
+    });
 
     // Проверяем, есть ли реферальный код
     async function checkReferralCode(ctx, text) {
@@ -467,7 +467,8 @@ ${ctx.t('invite_link', { link: referralLink })}`;
     }
 
     // Запуск бота
-    bot.start();
+    await bot.api.deleteWebhook();
+    await bot.start();
 }
 
 init();
